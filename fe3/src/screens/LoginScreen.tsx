@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import axios, { AxiosError } from 'axios';
@@ -19,23 +19,55 @@ type LoginScreenProps = {
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [errors, setErrors] = useState<{email?: string; password?: string; general?: string}>({});
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
+  const validateForm = () => {
+    const newErrors: {email?: string; password?: string} = {};
+    
+    // Validate email
+    if (!email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Email is invalid';
+    }
+
+    // Validate password
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogin = async (): Promise<void> => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors({});
+
     try {
       const response = await axios.post('http://10.0.2.2:8000/api/login', {
         email,
         password,
       });
 
-      console.log('Login successful:', response.data);
       login(response.data.access_token, response.data.user);
-      Alert.alert('Success', 'Login successful!');
       navigation.navigate('Home');
     } catch (error) {
-      const axiosError = error as AxiosError;
+      const axiosError = error as AxiosError<{message: string}>;
       console.error('Login error:', axiosError);
-      Alert.alert('Error', axiosError.response?.data?.message || 'Login failed');
+      setErrors({
+        general: axiosError.response?.data?.message || 'Invalid email or password'
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -51,29 +83,58 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       </View>
 
       <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        {errors.general && (
+          <View style={styles.generalErrorContainer}>
+            <Text style={styles.generalErrorText}>{errors.general}</Text>
+          </View>
+        )}
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>LOGIN</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.email ? styles.inputError : null]}
+            placeholder="Email"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              setErrors(prev => ({...prev, email: undefined, general: undefined}));
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!isLoading}
+          />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.password ? styles.inputError : null]}
+            placeholder="Password"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              setErrors(prev => ({...prev, password: undefined, general: undefined}));
+            }}
+            secureTextEntry
+            editable={!isLoading}
+          />
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.loginButtonText}>LOGIN</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={isLoading}>
             <Text style={styles.signupLink}>Sign up</Text>
           </TouchableOpacity>
         </View>
@@ -124,15 +185,39 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
   },
+  generalErrorContainer: {
+    backgroundColor: '#ffe6e6',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ff4757',
+  },
+  generalErrorText: {
+    color: '#ff4757',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
   input: {
     height: 50,
     borderWidth: 1,
     borderColor: '#E8E8E8',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 20,
     fontSize: 16,
     backgroundColor: '#fff',
+  },
+  inputError: {
+    borderColor: '#ff4757',
+  },
+  errorText: {
+    color: '#ff4757',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
   },
   loginButton: {
     backgroundColor: '#6C47FF',
@@ -141,6 +226,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
+  },
+  loginButtonDisabled: {
+    backgroundColor: '#A99BFF',
   },
   loginButtonText: {
     color: '#fff',

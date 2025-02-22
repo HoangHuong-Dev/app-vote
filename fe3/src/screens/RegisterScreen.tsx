@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import axios, { AxiosError } from 'axios';
@@ -20,9 +20,51 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    general?: string;
+  }>({});
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
+  const validateForm = () => {
+    const newErrors: {name?: string; email?: string; password?: string} = {};
+    
+    // Validate name
+    if (!name) {
+      newErrors.name = 'Name is required';
+    } else if (name.length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    }
+
+    // Validate email
+    if (!email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Email is invalid';
+    }
+
+    // Validate password
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleRegister = async (): Promise<void> => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors({});
+
     try {
       const response = await axios.post('http://10.0.2.2:8000/api/register', {
         name,
@@ -30,14 +72,16 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         password,
       });
 
-      console.log('Registration successful:', response.data);
       login(response.data.access_token, response.data.user);
-      Alert.alert('Success', 'Registration successful!');
       navigation.navigate('Home');
     } catch (error) {
-      const axiosError = error as AxiosError;
+      const axiosError = error as AxiosError<{message: string}>;
       console.error('Registration error:', axiosError);
-      Alert.alert('Error', axiosError.response?.data?.message || 'Registration failed');
+      setErrors({
+        general: axiosError.response?.data?.message || 'Registration failed. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -54,36 +98,73 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       </View>
 
       <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        {errors.general && (
+          <View style={styles.generalErrorContainer}>
+            <Text style={styles.generalErrorText}>{errors.general}</Text>
+          </View>
+        )}
 
-        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-          <Text style={styles.registerButtonText}>SIGN UP</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.name ? styles.inputError : null]}
+            placeholder="Full Name"
+            value={name}
+            onChangeText={(text) => {
+              setName(text);
+              setErrors(prev => ({...prev, name: undefined, general: undefined}));
+            }}
+            autoCapitalize="words"
+            editable={!isLoading}
+          />
+          {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.email ? styles.inputError : null]}
+            placeholder="Email"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              setErrors(prev => ({...prev, email: undefined, general: undefined}));
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!isLoading}
+          />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, errors.password ? styles.inputError : null]}
+            placeholder="Password"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              setErrors(prev => ({...prev, password: undefined, general: undefined}));
+            }}
+            secureTextEntry
+            editable={!isLoading}
+          />
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.registerButton, isLoading && styles.registerButtonDisabled]} 
+          onPress={handleRegister}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.registerButtonText}>SIGN UP</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.loginContainer}>
           <Text style={styles.loginText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')} disabled={isLoading}>
             <Text style={styles.loginLink}>Login</Text>
           </TouchableOpacity>
         </View>
@@ -139,15 +220,39 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
   },
+  generalErrorContainer: {
+    backgroundColor: '#ffe6e6',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ff4757',
+  },
+  generalErrorText: {
+    color: '#ff4757',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
   input: {
     height: 50,
     borderWidth: 1,
     borderColor: '#E8E8E8',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 20,
     fontSize: 16,
     backgroundColor: '#fff',
+  },
+  inputError: {
+    borderColor: '#ff4757',
+  },
+  errorText: {
+    color: '#ff4757',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
   },
   registerButton: {
     backgroundColor: '#6C47FF',
@@ -161,6 +266,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+  },
+  registerButtonDisabled: {
+    backgroundColor: '#A99BFF',
   },
   registerButtonText: {
     color: '#fff',
