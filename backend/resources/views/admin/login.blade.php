@@ -22,7 +22,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('admin.login.submit') }}" class="space-y-6">
+            <form method="POST" action="{{ route('login.submit') }}" class="space-y-6">
                 @csrf
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
