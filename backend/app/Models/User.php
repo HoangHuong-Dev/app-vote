@@ -43,4 +43,20 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function votes()
+    {
+        return $this->hasMany(Vote::class);
+    }
+
+    public function hasVotedForTopic(Topic $topic): bool
+    {
+        return $this->votes()->where('topic_id', $topic->id)->exists();
+    }
+
+    public function getVotedClubInTopic(Topic $topic)
+    {
+        $vote = $this->votes()->where('topic_id', $topic->id)->first();
+        return $vote ? $vote->club : null;
+    }
 }
