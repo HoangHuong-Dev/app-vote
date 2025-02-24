@@ -8,4 +8,17 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        outDir: 'public/build',
+        emptyOutDir: true,
+        manifest: true,
+        rollupOptions: {
+            input: {
+                app: 'resources/js/app.js'
+            }
+        }
+    },
+    server: {
+        hmr: false // Disable HMR in production
+    }
 });
