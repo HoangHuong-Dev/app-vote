@@ -7,10 +7,6 @@ git pull origin main
 
 # Install dependencies
 composer install --no-dev --optimize-autoloader
-yarn install --production
-
-# Build assets
-yarn build
 
 # Clear caches
 php artisan config:clear
@@ -25,5 +21,6 @@ php artisan view:cache
 
 # Set permissions
 chmod -R 775 storage bootstrap/cache public/uploads
+chmod -R 775 public/build
 
 echo "Application deployed!" 
