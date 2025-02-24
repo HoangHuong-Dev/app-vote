@@ -1,3 +1,43 @@
+@import '@fortawesome/fontawesome-free/css/all.min.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom Pagination Styles */
+@layer components {
+    .pagination-custom {
+        @apply flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6;
+    }
+
+    .pagination-mobile {
+        @apply flex flex-1 justify-between sm:hidden;
+    }
+
+    .pagination-desktop {
+        @apply hidden sm:flex sm:flex-1 sm:items-center sm:justify-between;
+    }
+
+    .pagination-button {
+        @apply relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md;
+    }
+
+    .pagination-button-active {
+        @apply z-10 bg-blue-50 border-blue-500 text-blue-600;
+    }
+
+    .pagination-button-inactive {
+        @apply bg-white border-gray-300 text-gray-500 hover:bg-gray-50;
+    }
+
+    .pagination-disabled {
+        @apply cursor-not-allowed bg-gray-100;
+    }
+
+    .pagination-info {
+        @apply text-sm text-gray-700;
+    }
+
+    .pagination-nav {
+        @apply relative z-0 inline-flex rounded-md shadow-sm -space-x-px;
+    }
+}

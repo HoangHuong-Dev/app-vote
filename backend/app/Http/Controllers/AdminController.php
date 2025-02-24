@@ -41,8 +41,22 @@ class AdminController extends Controller
 
     public function index()
     {
-        return view('admin.index', [
-            'users' => User::all()
+        // Redirect to users management by default
+        return redirect()->route('admin.users.index');
+    }
+
+    public function users()
+    {
+        $users = User::query()
+            ->when(request('search'), function($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return view('admin.users.index', [
+            'users' => $users
         ]);
     }
 
@@ -62,7 +76,7 @@ class AdminController extends Controller
             'is_admin' => $validated['is_admin']
         ]);
 
-        return redirect()->route('admin.dashboard')->with('success', 'User created successfully.');
+        return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
 
     public function update(Request $request, $id)
@@ -84,27 +98,25 @@ class AdminController extends Controller
         $user->is_admin = $validated['is_admin'];
         $user->save();
 
-        return redirect()->route('admin.dashboard')->with('success', 'User updated successfully.');
+        return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
 
     public function destroy($id)
     {
         $user = User::findOrFail($id);
         
-        // Prevent deleting self
         if ($user->id === Auth::id()) {
             return back()->with('error', 'You cannot delete your own account.');
         }
 
         $user->delete();
-        return redirect()->route('admin.dashboard')->with('success', 'User deleted successfully.');
+        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 
     public function toggleAdmin($id)
     {
         $user = User::findOrFail($id);
         
-        // Prevent removing admin status from self
         if ($user->id === Auth::id()) {
             return back()->with('error', 'You cannot remove your own admin status.');
         }

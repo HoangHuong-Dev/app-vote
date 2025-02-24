@@ -11,17 +11,17 @@ class Topic extends Model
 
     protected $fillable = [
         'title',
-        'image', 
-        'description', 
-        'start_date', 
-        'end_date', 
+        'description',
+        'image',
+        'start_date',
+        'end_date',
         'is_active'
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
-        'is_active' => 'boolean',
+        'is_active' => 'boolean'
     ];
 
     public function votes()
@@ -29,8 +29,9 @@ class Topic extends Model
         return $this->hasMany(Vote::class);
     }
 
-    public function isActive(): bool
+    public function isActive()
     {
-        return $this->is_active && $this->start_date <= now() && $this->end_date >= now();
+        return $this->is_active && 
+               now()->between($this->start_date, $this->end_date);
     }
 }

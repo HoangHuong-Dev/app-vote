@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Club;
 use App\Models\Country;
 use App\Models\Topic;
+use App\Models\Vote;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -152,5 +153,77 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
             'image' => 'https://example.com/music-topic.jpg'
         ]);
+
+        // Sau khi tạo xong topics và users, thêm một số votes
+        
+        // Lấy topic bóng đá
+        $footballTopic = Topic::where('title', 'like', '%Ngoại hạng Anh%')->first();
+        
+        // Lấy các CLB bóng đá
+        $manchesterUnited = Club::where('name', 'Manchester United')->first();
+        $liverpool = Club::where('name', 'Liverpool')->first();
+        $realMadrid = Club::where('name', 'Real Madrid')->first();
+        $barcelona = Club::where('name', 'Barcelona')->first();
+
+        // Lấy topic âm nhạc
+        $musicTopic = Topic::where('title', 'like', '%K-pop%')->first();
+        
+        // Lấy các nhóm nhạc
+        $bts = Club::where('name', 'BTS')->first();
+        $blackpink = Club::where('name', 'BLACKPINK')->first();
+        $maroon5 = Club::where('name', 'Maroon 5')->first();
+        $imagineDragons = Club::where('name', 'Imagine Dragons')->first();
+
+        // Lấy danh sách users (trừ admin)
+        $users = User::where('is_admin', false)->get();
+
+        // Tạo votes cho topic bóng đá
+        Vote::create([
+            'user_id' => $users[0]->id,
+            'topic_id' => $footballTopic->id,
+            'club_id' => $manchesterUnited->id,
+            'comment' => 'Manchester United là CLB vĩ đại nhất!',
+            'created_at' => now()->subDays(5)
+        ]);
+
+        Vote::create([
+            'user_id' => $users[1]->id,
+            'topic_id' => $footballTopic->id,
+            'club_id' => $liverpool->id,
+            'comment' => 'You\'ll Never Walk Alone!',
+            'created_at' => now()->subDays(4)
+        ]);
+
+        Vote::create([
+            'user_id' => $users[2]->id,
+            'topic_id' => $footballTopic->id,
+            'club_id' => $manchesterUnited->id,
+            'comment' => 'Glory Glory Man United',
+            'created_at' => now()->subDays(3)
+        ]);
+
+        // Tạo votes cho topic âm nhạc
+        Vote::create([
+            'user_id' => $users[3]->id,
+            'topic_id' => $musicTopic->id,
+            'club_id' => $bts->id,
+            'comment' => 'BTS Army forever!',
+            'created_at' => now()->subDays(2)
+        ]);
+
+        Vote::create([
+            'user_id' => $users[4]->id,
+            'topic_id' => $musicTopic->id,
+            'club_id' => $blackpink->id,
+            'comment' => 'BLACKPINK in your area!',
+            'created_at' => now()->subDays(1)
+        ]);
+
+        // Cập nhật số lượt vote cho các clubs
+        $clubs = Club::all();
+        foreach ($clubs as $club) {
+            $voteCount = Vote::where('club_id', $club->id)->count();
+            $club->update(['votes_count' => $voteCount]);
+        }
     }
 }
