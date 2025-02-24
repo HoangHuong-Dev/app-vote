@@ -27,8 +27,3 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/users/{id}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
     Route::post('/users/{id}/toggle-admin', [AdminController::class, 'toggleAdmin'])->name('admin.toggle');
 });
-
-// API routes (giữ nguyên AuthController cho API)
-Route::post('/register', [AuthController::class, 'register']);
-// Route::post('/api/login', [AuthController::class, 'login']);
-// Route::post('/api/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
