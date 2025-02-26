@@ -28,6 +28,23 @@ export const getClubsByCountryAndTopic = (countryId: number, topicId: number) =>
   });
 };
 
+export const getClubRankingsByCountry = (countryId: number) => {
+  return new Promise((resolve, reject) => {
+    network
+      .authorizedRequest(`rankings/country/${countryId}`, 'GET')
+      .then((res: AxiosResponse) => {
+        if (res.status >= 400) {
+          reject(res);
+        }
+        resolve(res as any);
+      })
+      .catch((err: any) => {
+        reject(err);
+      });
+  });
+};
+
 export default {
   getClubsByCountryAndTopic,
+  getClubRankingsByCountry
 }; 

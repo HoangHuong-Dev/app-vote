@@ -112,6 +112,8 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (err: any) {
+      console.log('err', err);
+      
       const errorMessage = err.response?.data?.message || 'Failed to submit vote';
       Alert.alert('Error', errorMessage);
     } finally {

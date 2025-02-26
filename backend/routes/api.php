@@ -7,6 +7,7 @@ use App\Http\Controllers\API\CountryController;
 use App\Http\Controllers\API\ClubController;
 use App\Http\Controllers\API\TopicController;
 use App\Http\Controllers\API\VoteController;
+use App\Http\Controllers\API\RankingController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -18,6 +19,7 @@ Route::get('/clubs', [ClubController::class, 'index']);
 Route::get('/clubs/{club}', [ClubController::class, 'show']);
 Route::get('/topics', [TopicController::class, 'index']);
 Route::get('/topics/{topic}', [TopicController::class, 'show']);
+Route::get('/rankings/country/{country}', [RankingController::class, 'getClubRankingsByCountry']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

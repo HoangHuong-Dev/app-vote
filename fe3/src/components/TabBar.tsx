@@ -25,7 +25,7 @@ const TabBar = ({ navigation, onLogout }: TabBarProps) => {
       
       <TouchableOpacity 
         style={styles.tabItem}
-        onPress={() => navigation.navigate('Ranking')}
+        onPress={() => navigation.navigate('Countries')}
       >
         <Text style={styles.tabText}>Bóng đá</Text>
       </TouchableOpacity>

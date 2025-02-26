@@ -14,7 +14,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import { AuthProvider } from './src/context/AuthContext';
 import TopicsScreen from './src/screens/TopicsScreen';
 import VotingScreen from './src/screens/VotingScreen';
-import RankingScreen from './src/screens/RankingScreen';
+import CountriesScreen from './src/screens/CountriesScreen';
+import RankingsScreen from './src/screens/RankingsScreen';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -23,6 +24,8 @@ export type RootStackParamList = {
   Topics: undefined;
   VotingScreen: { topicId: number };
   Ranking: undefined;
+  Countries: undefined;
+  Rankings: { countryId: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -57,7 +60,8 @@ function App(): React.JSX.Element {
             component={VotingScreen}
             options={{ title: 'Vote' }}
           />
-          <Stack.Screen name="Ranking" component={RankingScreen} />
+          <Stack.Screen name="Countries" component={CountriesScreen} />
+          <Stack.Screen name="Rankings" component={RankingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

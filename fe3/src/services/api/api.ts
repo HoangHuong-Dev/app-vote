@@ -4,10 +4,12 @@ import countries from './countries';
 import clubs from './clubs';
 import votes from './votes';
 
-export default {
+const api = {
   ...user,
   ...topics,
   ...countries,
   ...clubs,
   ...votes,
 };
+
+export default api;
