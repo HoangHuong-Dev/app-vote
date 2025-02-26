@@ -11,6 +11,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import axios, { AxiosError } from 'axios';
 import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api/api';
 
 type RegisterScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
@@ -66,13 +67,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     setErrors({});
 
     try {
-      const response = await axios.post('http://10.0.2.2:8000/api/register', {
-        name,
-        email,
-        password,
-      });
-
-      login(response.data.access_token, response.data.user);
+      const response: any = await api.register(name, email, password);
+      login(response?.access_token, response?.user);
       navigation.navigate('Home');
     } catch (error) {
       const axiosError = error as AxiosError<{message: string}>;
