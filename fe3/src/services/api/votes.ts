@@ -19,16 +19,14 @@ export const submitVote = (topicId: number, clubId: number) => {
         club_id: clubId
       })
       .then((res: AxiosResponse) => {
-        if (res.status >= 400 || res?.data?.status >= 400) {
-          const errorMessage = res.data?.message || 'Failed to submit vote';
-          reject(new Error(errorMessage));
+        if (res.status >= 400) {
+          reject(res);
           return;
         }
         resolve(res);
       })
       .catch((err: any) => {
-        const errorMessage = err.response?.data?.message || err.message || 'Failed to submit vote';
-        reject(new Error(errorMessage));
+        reject(err);
       });
   });
 };

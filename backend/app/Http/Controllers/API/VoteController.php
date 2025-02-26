@@ -35,47 +35,18 @@ class VoteController extends Controller
 
         $topic = Topic::findOrFail($request->topic_id);
         
-        // Kiểm tra topic có đang active
-        if (!$topic->isActive()) {
-            return response()->json([
-                'message' => 'This topic is not active for voting'
-            ], 403);
-        }
-
-        // Kiểm tra user đã vote cho club trong topic này chưa
-        $existingVote = $request->user()->votes()
-            ->where('topic_id', $topic->id)
-            ->where('club_id', $request->club_id)
-            ->exists();
-
-        if ($existingVote) {
-            return response()->json([
-                'message' => 'You have already voted for this club in this topic'
-            ], 403);
-        }
-
-        // Kiểm tra user đã vote cho topic này chưa
+        // Check if user already voted for this topic
         $hasVotedForTopic = $request->user()->votes()
             ->where('topic_id', $topic->id)
             ->exists();
 
         if ($hasVotedForTopic) {
             return response()->json([
-                'message' => 'You have already voted for this topic. You can only vote once per topic.'
+                'message' => 'You have already voted for this topic'
             ], 403);
         }
 
-        // Kiểm tra club có thuộc về topic không
-        $club = Club::findOrFail($request->club_id);
-        if (!$topic->countries()->whereHas('clubs', function($query) use ($club) {
-            $query->where('id', $club->id);
-        })->exists()) {
-            return response()->json([
-                'message' => 'This club is not available for voting in this topic'
-            ], 403);
-        }
-
-        // Tạo vote trong transaction
+        // Create vote in transaction
         DB::beginTransaction();
         try {
             $vote = Vote::create([
@@ -84,8 +55,8 @@ class VoteController extends Controller
                 'club_id' => $request->club_id
             ]);
 
-            // Tăng số lượt vote cho club
-            $club->increment('votes_count');
+            // Increment vote count
+            Club::where('id', $request->club_id)->increment('votes_count');
             
             DB::commit();
             return response()->json($vote->load(['topic', 'club']), 201);
