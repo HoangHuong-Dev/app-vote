@@ -3,9 +3,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build --emptyOutDir",
+        "build": "NODE_OPTIONS='--max-old-space-size=512' vite build --emptyOutDir",
         "start": "vite preview",
-        "prod": "yarn install && yarn build"
+        "prod": "NODE_OPTIONS='--max-old-space-size=512' yarn install && yarn build"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.20",
