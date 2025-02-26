@@ -42,10 +42,26 @@ class VoteController extends Controller
             ], 403);
         }
 
-        // Kiểm tra user đã vote chưa
-        if ($request->user()->votes()->where('topic_id', $topic->id)->exists()) {
+        // Kiểm tra user đã vote cho club trong topic này chưa
+        $existingVote = $request->user()->votes()
+            ->where('topic_id', $topic->id)
+            ->where('club_id', $request->club_id)
+            ->exists();
+
+        if ($existingVote) {
             return response()->json([
-                'message' => 'You have already voted for this topic'
+                'message' => 'You have already voted for this club in this topic'
+            ], 403);
+        }
+
+        // Kiểm tra user đã vote cho topic này chưa
+        $hasVotedForTopic = $request->user()->votes()
+            ->where('topic_id', $topic->id)
+            ->exists();
+
+        if ($hasVotedForTopic) {
+            return response()->json([
+                'message' => 'You have already voted for this topic. You can only vote once per topic.'
             ], 403);
         }
 

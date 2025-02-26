@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
+import network from '../services/network/network';
 
 interface AuthContextType {
   token: string | null;
@@ -14,13 +15,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
 
   const login = (token: string, userData: any) => {
+    if (!token) {
+      console.error('Token is missing');
+      return;
+    }
     setToken(token);
     setUser(userData);
+    network.setToken(token);
+    console.log("Token set:", token);
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
+    network.setToken('');
   };
 
   return (

@@ -11,19 +11,24 @@ export type Vote = {
 
 export const submitVote = (topicId: number, clubId: number) => {
   return new Promise((resolve, reject) => {
+    console.log('Submitting vote with token:', network.getToken());
+    
     network
       .authorizedRequest('votes', 'POST', {
         topic_id: topicId,
         club_id: clubId
       })
       .then((res: AxiosResponse) => {
-        if (res.status >= 400) {
-          reject(res);
+        if (res.status >= 400 || res?.data?.status >= 400) {
+          const errorMessage = res.data?.message || 'Failed to submit vote';
+          reject(new Error(errorMessage));
+          return;
         }
-        resolve(res as any);
+        resolve(res);
       })
       .catch((err: any) => {
-        reject(err);
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to submit vote';
+        reject(new Error(errorMessage));
       });
   });
 };

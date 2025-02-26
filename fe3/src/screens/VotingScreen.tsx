@@ -29,6 +29,7 @@ type TopicWithDetails = Topic & {
   countries: (Country & {
     clubs: Club[];
   })[];
+  is_active?: boolean;
 };
 
 const windowWidth = Dimensions.get('window').width;
@@ -40,6 +41,7 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
   const { logout } = useAuth();
+  const [isTopicActive, setIsTopicActive] = useState(true);
 
   useEffect(() => {
     fetchTopicDetails();
@@ -49,6 +51,7 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
     try {
       const response = await api.getTopicDetails(route.params.topicId);
       setTopic(response as TopicWithDetails);
+      setIsTopicActive(response.is_active ?? true);
     } catch (err) {
       Alert.alert('Error', 'Failed to load topic details');
     } finally {
@@ -77,10 +80,10 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
     <TouchableOpacity 
       style={[
         styles.clubCard,
-        voting && styles.clubCardDisabled
+        (voting || !isTopicActive) && styles.clubCardDisabled
       ]}
       onPress={() => handleVote(item.id)}
-      disabled={voting}
+      disabled={voting || !isTopicActive}
     >
       <Image 
         source={{ uri: item.logo }}
@@ -91,6 +94,9 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
         <Text style={styles.clubVotes}>Votes: {item.votes_count}</Text>
       </View>
       {voting && <ActivityIndicator size="small" color="#6C47FF" />}
+      {!isTopicActive && (
+        <Text style={styles.inactiveText}>Voting closed</Text>
+      )}
     </TouchableOpacity>
   );
 
@@ -132,12 +138,20 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
   return (
     <View style={styles.mainContainer}>
       <View style={styles.content}>
+        {!isTopicActive && (
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningText}>
+              This topic is not currently active for voting
+            </Text>
+          </View>
+        )}
         {!selectedCountry ? (
           <>
             <View style={styles.header}>
               <Text style={styles.headerText}>Chọn Quốc Gia</Text>
             </View>
             <FlatList
+              key="countries-grid"
               data={topic?.countries}
               renderItem={renderCountry}
               keyExtractor={item => item.id.toString()}
@@ -159,6 +173,7 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
               <Text style={styles.headerText}>Chọn Câu Lạc Bộ</Text>
             </View>
             <FlatList
+              key="clubs-list"
               data={topic?.countries.find(c => c.id === selectedCountry)?.clubs}
               renderItem={renderClub}
               keyExtractor={item => item.id.toString()}
@@ -270,6 +285,25 @@ const styles = StyleSheet.create({
   },
   clubCardDisabled: {
     opacity: 0.7,
+  },
+  warningBanner: {
+    backgroundColor: '#FF474720',
+    padding: 10,
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FF4747',
+  },
+  warningText: {
+    color: '#FF4747',
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  inactiveText: {
+    color: '#FF4747',
+    fontSize: 12,
+    marginLeft: 8,
   },
 });
 

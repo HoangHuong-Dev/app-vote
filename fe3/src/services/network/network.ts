@@ -61,6 +61,12 @@ class Network {
     header?: object | null,
     params?: object,
   ): AxiosPromise<T> {
+    const headers = {
+      ...header,
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.token}`,
+    };
+
     const response: AxiosPromise<T> = axios({
       method: method,
       url: url,
@@ -68,11 +74,7 @@ class Network {
       data: data,
       params: params,
       timeout: 60000,
-      headers: {
-        ...header,
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + this.token,
-      },
+      headers: headers,
     });
     return response;
   }
