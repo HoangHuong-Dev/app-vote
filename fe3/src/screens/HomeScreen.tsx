@@ -15,6 +15,7 @@ import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api/api';
 import type { Topic } from '../services/api/topics';
+import TabBar from '../components/TabBar';
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -27,6 +28,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const translateY = new Animated.Value(50);
 
   useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+    
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -43,6 +48,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
     fetchTopics();
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigation.replace('Login');
+  };
 
   const fetchTopics = async () => {
     try {
@@ -69,21 +79,22 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     </TouchableOpacity>
   );
 
-  const handleLogout = () => {
-    logout();
-    navigation.replace('Login');
-  };
-
   return (
-    <ScrollView style={styles.container}>
-      <Animated.View
-        style={[
+    <View style={styles.mainContainer}>
+      <ScrollView style={styles.container}>
+        <Animated.View
+          style={[
           styles.welcomeContainer,
           {
             opacity: fadeAnim,
             transform: [{ translateY }],
           },
         ]}>
+
+        {/* Header Section */}
+        <View style={styles.header}>
+          <Text style={styles.nameText}>Xin chào {user?.name || 'User'}</Text>
+        </View>
 
         {/* Topics Grid */}
         <View style={styles.topicsContainer}>
@@ -97,13 +108,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             scrollEnabled={false}
           />
         </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>LOGOUT</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </ScrollView>
+        </Animated.View>
+      </ScrollView>
+      <TabBar navigation={navigation} onLogout={handleLogout} />
+    </View>
   );
 };
 
@@ -111,6 +119,10 @@ const windowWidth = Dimensions.get('window').width;
 const itemWidth = (windowWidth - 60) / 2; // 60 = padding (20) * 2 + gap between items (20)
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+  },
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',

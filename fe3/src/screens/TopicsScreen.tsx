@@ -12,6 +12,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import api from '../services/api/api';
 import type { Country } from '../services/api/countries';
+import { useAuth } from '../context/AuthContext';
+import TabBar from '../components/TabBar';
 
 type TopicsScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Topics'>;
@@ -21,6 +23,7 @@ const TopicsScreen: React.FC<TopicsScreenProps> = ({ navigation }) => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { logout } = useAuth();
 
   useEffect(() => {
     fetchCountries();
@@ -57,6 +60,11 @@ const TopicsScreen: React.FC<TopicsScreenProps> = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  const handleLogout = () => {
+    logout();
+    navigation.replace('Login');
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -81,6 +89,7 @@ const TopicsScreen: React.FC<TopicsScreenProps> = ({ navigation }) => {
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.listContainer}
       />
+      <TabBar navigation={navigation} onLogout={handleLogout} />
     </View>
   );
 };

@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
   Image,
+  Dimensions,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -16,6 +17,8 @@ import api from '../services/api/api';
 import type { Country } from '../services/api/countries';
 import type { Club } from '../services/api/clubs';
 import type { Topic } from '../services/api/topics';
+import TabBar from '../components/TabBar';
+import { useAuth } from '../context/AuthContext';
 
 type VotingScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'VotingScreen'>;
@@ -28,11 +31,15 @@ type TopicWithDetails = Topic & {
   })[];
 };
 
+const windowWidth = Dimensions.get('window').width;
+const itemWidth = (windowWidth - 60) / 2; // 60 = padding (20) * 2 + gap between items (20)
+
 const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
   const [topic, setTopic] = useState<TopicWithDetails | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
+  const { logout } = useAuth();
 
   useEffect(() => {
     fetchTopicDetails();
@@ -51,7 +58,7 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
 
   const renderCountry = ({ item }: { item: Country }) => (
     <TouchableOpacity 
-      style={styles.countryCard}
+      style={[styles.countryCard, { width: itemWidth }]}
       onPress={() => setSelectedCountry(item.id)}
     >
       <Image 
@@ -59,11 +66,9 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
         style={styles.countryImage}
       />
       <View style={styles.countryInfo}>
-        <Text style={styles.countryName}>{item.name}</Text>
-        <Image 
-          source={{ uri: item.flag }}
-          style={styles.countryFlag}
-        />
+        <Text style={styles.countryName} numberOfLines={2}>
+          {item.name}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -108,132 +113,160 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigation.replace('Login');
+  };
+
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#6C47FF" />
+      <View style={styles.mainContainer}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#6C47FF" />
+        </View>
+        <TabBar navigation={navigation} onLogout={handleLogout} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {!selectedCountry ? (
-        // Show countries list
-        <FlatList
-          data={topic?.countries}
-          renderItem={renderCountry}
-          keyExtractor={item => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-        />
-      ) : (
-        // Show clubs list for selected country
-        <>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => setSelectedCountry(null)}
-            disabled={voting}
-          >
-            <Text style={styles.backButtonText}>← Back to Countries</Text>
-          </TouchableOpacity>
-          <FlatList
-            data={topic?.countries.find(c => c.id === selectedCountry)?.clubs}
-            renderItem={renderClub}
-            keyExtractor={item => item.id.toString()}
-            contentContainerStyle={styles.listContainer}
-          />
-        </>
-      )}
+    <View style={styles.mainContainer}>
+      <View style={styles.content}>
+        {!selectedCountry ? (
+          <>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Chọn Quốc Gia</Text>
+            </View>
+            <FlatList
+              data={topic?.countries}
+              renderItem={renderCountry}
+              keyExtractor={item => item.id.toString()}
+              contentContainerStyle={styles.listContainer}
+              numColumns={2}
+              columnWrapperStyle={styles.row}
+            />
+          </>
+        ) : (
+          <>
+            <View style={styles.header}>
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={() => setSelectedCountry(null)}
+                disabled={voting}
+              >
+                <Text style={styles.backButtonText}>← Quay lại</Text>
+              </TouchableOpacity>
+              <Text style={styles.headerText}>Chọn Câu Lạc Bộ</Text>
+            </View>
+            <FlatList
+              data={topic?.countries.find(c => c.id === selectedCountry)?.clubs}
+              renderItem={renderClub}
+              keyExtractor={item => item.id.toString()}
+              contentContainerStyle={styles.listContainer}
+            />
+          </>
+        )}
+      </View>
+      <TabBar navigation={navigation} onLogout={handleLogout} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#1a1a1a',
+  },
+  content: {
+    flex: 1,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listContainer: {
-    padding: 16,
-  },
-  countryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  countryImage: {
-    width: '100%',
-    height: 150,
-    resizeMode: 'cover',
-  },
-  countryInfo: {
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  countryName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  countryFlag: {
-    width: 30,
-    height: 20,
-    resizeMode: 'contain',
-  },
-  clubCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
   },
-  clubLogo: {
-    width: 40,
-    height: 40,
-    resizeMode: 'contain',
-    marginRight: 12,
-  },
-  clubInfo: {
+  headerText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
     flex: 1,
-    marginLeft: 12,
-  },
-  clubName: {
-    fontSize: 16,
-    color: '#333',
-  },
-  clubVotes: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
   },
   backButton: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    marginRight: 15,
   },
   backButtonText: {
     color: '#6C47FF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  listContainer: {
+    padding: 20,
+  },
+  row: {
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  countryCard: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  countryImage: {
+    width: '100%',
+    height: 120,
+    resizeMode: 'cover',
+  },
+  countryInfo: {
+    padding: 10,
+  },
+  countryName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  countryFlag: {
+    display: 'none',
+  },
+  clubCard: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  clubLogo: {
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
+    marginRight: 12,
+    backgroundColor: '#3a3a3a',
+    borderRadius: 25,
+  },
+  clubInfo: {
+    flex: 1,
+  },
+  clubName: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  clubVotes: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 4,
   },
   clubCardDisabled: {
     opacity: 0.7,
