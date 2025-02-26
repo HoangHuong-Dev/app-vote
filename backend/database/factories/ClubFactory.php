@@ -11,7 +11,8 @@ class ClubFactory extends Factory
     {
         return [
             'name' => fake()->company(),
-            'logo' => fake()->imageUrl(200, 200, 'logo'),
+            'logo' => '/uploads/demodemo01.png',
+            'image' => '/uploads/demodemo01.png',
             'country_id' => Country::factory(),
             'description' => fake()->paragraph(),
         ];

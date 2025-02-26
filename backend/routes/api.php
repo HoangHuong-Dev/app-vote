@@ -40,6 +40,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/topics/{topic}', [TopicController::class, 'update']);
     Route::delete('/topics/{topic}', [TopicController::class, 'destroy']);
 
-    // Vote routes (cho tất cả users đã đăng nhập)
-    Route::apiResource('votes', VoteController::class);
+    // Vote routes (yêu cầu đăng nhập)
+    Route::post('/votes', [VoteController::class, 'store']);
+    Route::get('/votes', [VoteController::class, 'index']);
+    Route::get('/votes/{vote}', [VoteController::class, 'show']);
+    Route::put('/votes/{vote}', [VoteController::class, 'update']);
+    Route::delete('/votes/{vote}', [VoteController::class, 'destroy']);
 }); 

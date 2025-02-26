@@ -11,7 +11,8 @@ class CountryFactory extends Factory
         return [
             'name' => fake()->country(),
             'code' => fake()->countryCode(),
-            'flag' => fake()->imageUrl(640, 480, 'flag'),
+            'flag' => '/uploads/demodemo01.png',
+            'image' => '/uploads/demodemo01.png',
         ];
     }
 } 

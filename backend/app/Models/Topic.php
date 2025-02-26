@@ -24,14 +24,38 @@ class Topic extends Model
         'is_active' => 'boolean'
     ];
 
+    protected $appends = ['image_url'];
+
     public function votes()
     {
         return $this->hasMany(Vote::class);
+    }
+
+    public function countries()
+    {
+        return $this->belongsToMany(Country::class, 'country_topic');
+    }
+
+    public function clubs()
+    {
+        return $this->hasManyThrough(
+            Club::class,
+            Country::class,
+            'id', // Foreign key on country_topic table...
+            'country_id', // Foreign key on clubs table...
+            'id', // Local key on topics table...
+            'id' // Local key on countries table...
+        );
     }
 
     public function isActive()
     {
         return $this->is_active && 
                now()->between($this->start_date, $this->end_date);
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return url($this->image);
     }
 }

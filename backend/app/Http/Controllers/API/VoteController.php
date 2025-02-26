@@ -7,6 +7,7 @@ use App\Models\Topic;
 use App\Models\Vote;
 use App\Models\Club;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VoteController extends Controller
 {
@@ -29,9 +30,7 @@ class VoteController extends Controller
     {
         $request->validate([
             'topic_id' => 'required|exists:topics,id',
-            'club_id' => 'required|exists:clubs,id',
-            'image' => 'nullable|string|url',
-            'comment' => 'nullable|string'
+            'club_id' => 'required|exists:clubs,id'
         ]);
 
         $topic = Topic::findOrFail($request->topic_id);
@@ -39,30 +38,47 @@ class VoteController extends Controller
         // Kiểm tra topic có đang active
         if (!$topic->isActive()) {
             return response()->json([
-                'message' => 'Chủ đề này không trong thời gian vote'
+                'message' => 'This topic is not active for voting'
             ], 403);
         }
 
         // Kiểm tra user đã vote chưa
-        if ($request->user()->hasVotedForTopic($topic)) {
+        if ($request->user()->votes()->where('topic_id', $topic->id)->exists()) {
             return response()->json([
-                'message' => 'Bạn đã vote cho chủ đề này rồi'
+                'message' => 'You have already voted for this topic'
             ], 403);
         }
 
-        $vote = Vote::create([
-            'user_id' => $request->user()->id,
-            'topic_id' => $request->topic_id,
-            'club_id' => $request->club_id,
-            'image' => $request->image,
-            'comment' => $request->comment
-        ]);
+        // Kiểm tra club có thuộc về topic không
+        $club = Club::findOrFail($request->club_id);
+        if (!$topic->countries()->whereHas('clubs', function($query) use ($club) {
+            $query->where('id', $club->id);
+        })->exists()) {
+            return response()->json([
+                'message' => 'This club is not available for voting in this topic'
+            ], 403);
+        }
 
-        // Tăng số lượt vote cho club
-        $club = Club::find($request->club_id);
-        $club->increment('votes_count');
+        // Tạo vote trong transaction
+        DB::beginTransaction();
+        try {
+            $vote = Vote::create([
+                'user_id' => $request->user()->id,
+                'topic_id' => $request->topic_id,
+                'club_id' => $request->club_id
+            ]);
 
-        return response()->json($vote->load(['topic', 'club']), 201);
+            // Tăng số lượt vote cho club
+            $club->increment('votes_count');
+            
+            DB::commit();
+            return response()->json($vote->load(['topic', 'club']), 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to submit vote'
+            ], 500);
+        }
     }
 
     /**

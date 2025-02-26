@@ -49,9 +49,11 @@ class User extends Authenticatable
         return $this->hasMany(Vote::class);
     }
 
-    public function hasVotedForTopic(Topic $topic): bool
+    public function hasVotedForTopic($topic)
     {
-        return $this->votes()->where('topic_id', $topic->id)->exists();
+        return $this->votes()
+            ->where('topic_id', is_object($topic) ? $topic->id : $topic)
+            ->exists();
     }
 
     public function getVotedClubInTopic(Topic $topic)

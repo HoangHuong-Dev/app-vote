@@ -25,4 +25,9 @@ class Country extends Model
     {
         return $this->hasMany(Club::class);
     }
+
+    public function topics()
+    {
+        return $this->belongsToMany(Topic::class, 'country_topic');
+    }
 }

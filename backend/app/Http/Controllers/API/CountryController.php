@@ -11,9 +11,26 @@ class CountryController extends Controller
     /**
      * Lấy danh sách tất cả các quốc gia
      */
-    public function index()
+    public function index(Request $request)
     {
-        $countries = Country::all();
+        $query = Country::query();
+        
+        // Filter by topic_id
+        if ($request->has('topic_id')) {
+            $query->whereHas('topics', function($q) use ($request) {
+                $q->where('topics.id', $request->topic_id);
+            });
+        }
+
+        $countries = $query->get();
+
+        // Transform to add full URLs for images
+        $countries->transform(function ($country) {
+            $country->flag = url($country->flag);
+            $country->image = url($country->image);
+            return $country;
+        });
+
         return response()->json($countries);
     }
 

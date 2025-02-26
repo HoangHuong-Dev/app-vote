@@ -8,66 +8,51 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import axios from 'axios';
-import { ENDPOINTS, getApiUrl } from '../constants/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
+import api from '../services/api/api';
+import type { Country } from '../services/api/countries';
 
 type TopicsScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Topics'>;
 };
 
-type Topic = {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  start_date: string;
-  end_date: string;
-  is_active: boolean;
-};
-
 const TopicsScreen: React.FC<TopicsScreenProps> = ({ navigation }) => {
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchTopics();
+    fetchCountries();
   }, []);
 
-  const fetchTopics = async () => {
+  const fetchCountries = async () => {
     try {
-      const response = await axios.get(getApiUrl(ENDPOINTS.TOPICS));
-      setTopics(response.data);
+      const response = await api.getCountries();
+      setCountries(response as Country[]);
     } catch (err) {
-      setError('Failed to load topics');
+      setError('Failed to load countries');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const renderTopic = ({ item }: { item: Topic }) => (
+  const renderCountry = ({ item }: { item: Country }) => (
     <TouchableOpacity 
-      style={styles.topicCard}
+      style={styles.countryCard}
       onPress={() => navigation.navigate('VotingScreen', { topicId: item.id })}
     >
       <Image 
-        source={{ uri: item.image || 'https://via.placeholder.com/150' }}
-        style={styles.topicImage}
+        source={{ uri: item.image }}
+        style={styles.countryImage}
       />
-      <View style={styles.topicInfo}>
-        <Text style={styles.topicTitle}>{item.title}</Text>
-        <Text style={styles.topicDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-        <Text style={[
-          styles.statusBadge,
-          item.is_active ? styles.activeBadge : styles.inactiveBadge
-        ]}>
-          {item.is_active ? 'Active' : 'Ended'}
-        </Text>
+      <View style={styles.countryInfo}>
+        <Text style={styles.countryName}>{item.name}</Text>
+        <Image 
+          source={{ uri: item.flag }}
+          style={styles.countryFlag}
+        />
       </View>
     </TouchableOpacity>
   );
@@ -91,8 +76,8 @@ const TopicsScreen: React.FC<TopicsScreenProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={topics}
-        renderItem={renderTopic}
+        data={countries}
+        renderItem={renderCountry}
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.listContainer}
       />
@@ -113,7 +98,7 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
   },
-  topicCard: {
+  countryCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginBottom: 16,
@@ -124,41 +109,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  topicImage: {
+  countryImage: {
     width: '100%',
     height: 150,
     resizeMode: 'cover',
   },
-  topicInfo: {
+  countryInfo: {
     padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  topicTitle: {
+  countryName: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 8,
     color: '#333',
   },
-  topicDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    overflow: 'hidden',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  activeBadge: {
-    backgroundColor: '#E8F5E9',
-    color: '#2E7D32',
-  },
-  inactiveBadge: {
-    backgroundColor: '#FFEBEE',
-    color: '#C62828',
+  countryFlag: {
+    width: 30,
+    height: 20,
+    resizeMode: 'contain',
   },
   errorText: {
     color: '#ff4757',

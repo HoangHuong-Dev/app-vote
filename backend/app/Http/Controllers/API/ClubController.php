@@ -10,17 +10,33 @@ class ClubController extends Controller
 {
     /**
      * Lấy danh sách tất cả các câu lạc bộ
-     * Có thể lọc theo country_id
+     * Có thể lọc theo country_id và topic_id
      */
     public function index(Request $request)
     {
-        $query = Club::with('country');
+        $query = Club::query();
         
+        // Filter by country_id
         if ($request->has('country_id')) {
             $query->where('country_id', $request->country_id);
         }
-        
+
+        // Filter by topic_id through country
+        if ($request->has('topic_id')) {
+            $query->whereHas('country.topics', function($q) use ($request) {
+                $q->where('topics.id', $request->topic_id);
+            });
+        }
+
         $clubs = $query->get();
+
+        // Transform to add full URLs for images
+        $clubs->transform(function ($club) {
+            $club->logo = url($club->logo);
+            $club->image = url($club->image);
+            return $club;
+        });
+        
         return response()->json($clubs);
     }
 

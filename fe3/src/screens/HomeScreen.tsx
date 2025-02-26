@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,15 @@ import {
   TouchableOpacity,
   Animated,
   ScrollView,
+  Image,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api/api';
+import type { Topic } from '../services/api/topics';
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -17,6 +22,7 @@ type HomeScreenProps = {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { user, logout } = useAuth();
+  const [topics, setTopics] = useState<Topic[]>([]);
   const fadeAnim = new Animated.Value(0);
   const translateY = new Animated.Value(50);
 
@@ -34,7 +40,34 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         useNativeDriver: true,
       }),
     ]).start();
+
+    fetchTopics();
   }, []);
+
+  const fetchTopics = async () => {
+    try {
+      const response = await api.getTopics();
+      setTopics(response as Topic[]);
+      console.log("topics", topics);
+    } catch (err) {
+      console.error('Failed to fetch topics:', err);
+    }
+  };
+
+  const renderTopicItem = ({ item }: { item: Topic }) => (
+    <TouchableOpacity 
+      style={styles.topicItem}
+      onPress={() => navigation.navigate('VotingScreen', { topicId: item.id })}
+    >
+      <Image 
+        source={{ uri: item.image_url }}
+        style={styles.topicImage}
+      />
+      <Text style={styles.topicTitle} numberOfLines={2}>
+        {item.title}
+      </Text>
+    </TouchableOpacity>
+  );
 
   const handleLogout = () => {
     logout();
@@ -51,53 +84,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             transform: [{ translateY }],
           },
         ]}>
-        {/* Header Section */}
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome to FootballVote</Text>
-          <Text style={styles.nameText}>{user?.name || 'User'}</Text>
-        </View>
 
-        {/* Stats Overview */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>24</Text>
-            <Text style={styles.statLabel}>Teams</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>1.2K</Text>
-            <Text style={styles.statLabel}>Votes</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>5</Text>
-            <Text style={styles.statLabel}>Leagues</Text>
-          </View>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('Topics')}
-          >
-            <Text style={styles.actionButtonText}>Vote Topics</Text>
-            <Text style={styles.actionDescription}>Browse and vote on football topics</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('Topics')}
-          >
-            <Text style={styles.actionButtonText}>Global Rankings</Text>
-            <Text style={styles.actionDescription}>View worldwide team rankings</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('Topics')}
-          >
-            <Text style={styles.actionButtonText}>My Votes</Text>
-            <Text style={styles.actionDescription}>See your voting history</Text>
-          </TouchableOpacity>
+        {/* Topics Grid */}
+        <View style={styles.topicsContainer}>
+          <Text style={styles.sectionTitle}>Vote Topics</Text>
+          <FlatList
+            data={topics}
+            renderItem={renderTopicItem}
+            keyExtractor={item => item.id.toString()}
+            numColumns={2}
+            columnWrapperStyle={styles.topicsRow}
+            scrollEnabled={false}
+          />
         </View>
 
         {/* Logout Button */}
@@ -108,6 +106,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     </ScrollView>
   );
 };
+
+const windowWidth = Dimensions.get('window').width;
+const itemWidth = (windowWidth - 60) / 2; // 60 = padding (20) * 2 + gap between items (20)
 
 const styles = StyleSheet.create({
   container: {
@@ -131,49 +132,36 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 5,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 15,
-    padding: 15,
-    marginHorizontal: 5,
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
+  sectionTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#6C47FF',
-    marginBottom: 5,
+    color: '#fff',
+    marginBottom: 15,
   },
-  statLabel: {
-    fontSize: 14,
-    color: '#888',
-  },
-  actionsContainer: {
+  topicsContainer: {
     marginBottom: 30,
   },
-  actionButton: {
+  topicsRow: {
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  topicItem: {
+    width: itemWidth,
     backgroundColor: '#2a2a2a',
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#6C47FF',
+    overflow: 'hidden',
   },
-  actionButtonText: {
+  topicImage: {
+    width: '100%',
+    height: 120,
+    resizeMode: 'cover',
+  },
+  topicTitle: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  actionDescription: {
-    color: '#888',
     fontSize: 14,
+    fontWeight: '600',
+    padding: 10,
+    textAlign: 'center',
   },
   logoutButton: {
     backgroundColor: '#ff4757',

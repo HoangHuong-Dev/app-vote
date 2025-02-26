@@ -16,7 +16,7 @@ class VoteFactory extends Factory
             'topic_id' => Topic::factory(),
             'club_id' => Club::factory(),
             'comment' => fake()->optional()->sentence(),
-            'image' => fake()->optional()->imageUrl(640, 480, 'vote'),
+            'image' => '/uploads/demodemo01.png',
             'created_at' => fake()->dateTimeBetween('-1 month', 'now'),
         ];
     }

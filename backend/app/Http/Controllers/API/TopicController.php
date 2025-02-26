@@ -21,6 +21,13 @@ class TopicController extends Controller
         }
         
         $topics = $query->latest()->get();
+
+        // Transform to add full URLs for images
+        $topics->transform(function ($topic) {
+            $topic->image = url($topic->image);
+            return $topic;
+        });
+        
         return response()->json($topics);
     }
 
@@ -47,20 +54,20 @@ class TopicController extends Controller
      */
     public function show(Topic $topic)
     {
-        $topic->load('votes.club');
-        
-        // Tính toán số lượng votes cho từng club
-        $voteStats = $topic->votes()
-            ->select('club_id')
-            ->selectRaw('count(*) as vote_count')
-            ->groupBy('club_id')
-            ->with('club')
-            ->get();
-            
-        return response()->json([
-            'topic' => $topic,
-            'vote_stats' => $voteStats
-        ]);
+        // Load countries của topic và clubs của mỗi country
+        $topic->load(['countries' => function ($query) {
+            $query->with('clubs');
+        }]);
+
+        // Transform để thêm full URL cho images
+        $topic->image = url($topic->image);
+        $topic->countries->transform(function ($country) {
+            $country->flag = url($country->flag);
+            $country->image = url($country->image);
+            return $country;
+        });
+
+        return response()->json($topic);
     }
 
     /**

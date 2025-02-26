@@ -6,147 +6,145 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  ScrollView,
+  FlatList,
+  Image,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import axios from 'axios';
-import { ENDPOINTS, getApiUrl } from '../constants/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
+import api from '../services/api/api';
+import type { Country } from '../services/api/countries';
+import type { Club } from '../services/api/clubs';
+import type { Topic } from '../services/api/topics';
 
 type VotingScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'VotingScreen'>;
   route: RouteProp<RootStackParamList, 'VotingScreen'>;
 };
 
-type Country = {
-  id: number;
-  name: string;
-  code: string;
-};
-
-type Club = {
-  id: number;
-  name: string;
-  logo: string;
+type TopicWithDetails = Topic & {
+  countries: (Country & {
+    clubs: Club[];
+  })[];
 };
 
 const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [clubs, setClubs] = useState<Club[]>([]);
+  const [topic, setTopic] = useState<TopicWithDetails | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<number | null>(null);
-  const [selectedClub, setSelectedClub] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [voting, setVoting] = useState(false);
 
   useEffect(() => {
-    fetchCountries();
+    fetchTopicDetails();
   }, []);
 
-  useEffect(() => {
-    if (selectedCountry) {
-      fetchClubs(selectedCountry);
-    }
-  }, [selectedCountry]);
-
-  const fetchCountries = async () => {
+  const fetchTopicDetails = async () => {
     try {
-      const response = await axios.get(getApiUrl(ENDPOINTS.COUNTRIES));
-      setCountries(response.data);
+      const response = await api.getTopicDetails(route.params.topicId);
+      setTopic(response as TopicWithDetails);
     } catch (err) {
-      Alert.alert('Error', 'Failed to load countries');
-    }
-  };
-
-  const fetchClubs = async (countryId: number) => {
-    try {
-      const response = await axios.get(getApiUrl(ENDPOINTS.CLUBS_BY_COUNTRY(countryId)));
-      setClubs(response.data);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to load clubs');
-    }
-  };
-
-  const handleVote = async () => {
-    if (!selectedClub) {
-      Alert.alert('Error', 'Please select a club');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await axios.post(getApiUrl(ENDPOINTS.VOTES), {
-        topic_id: route.params.topicId,
-        club_id: selectedClub,
-      });
-      
-      Alert.alert('Success', 'Your vote has been recorded', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
-    } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to submit vote');
+      Alert.alert('Error', 'Failed to load topic details');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.label}>Select Country</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={selectedCountry}
-            onValueChange={(value) => {
-              setSelectedCountry(value);
-              setSelectedClub(null);
-            }}
-          >
-            <Picker.Item label="Choose a country" value={null} />
-            {countries.map(country => (
-              <Picker.Item 
-                key={country.id} 
-                label={country.name} 
-                value={country.id} 
-              />
-            ))}
-          </Picker>
-        </View>
-
-        {selectedCountry && (
-          <>
-            <Text style={styles.label}>Select Club</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={selectedClub}
-                onValueChange={setSelectedClub}
-              >
-                <Picker.Item label="Choose a club" value={null} />
-                {clubs.map(club => (
-                  <Picker.Item 
-                    key={club.id} 
-                    label={club.name} 
-                    value={club.id} 
-                  />
-                ))}
-              </Picker>
-            </View>
-          </>
-        )}
-
-        <TouchableOpacity
-          style={[styles.voteButton, (!selectedClub || loading) && styles.disabledButton]}
-          onPress={handleVote}
-          disabled={!selectedClub || loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.voteButtonText}>Submit Vote</Text>
-          )}
-        </TouchableOpacity>
+  const renderCountry = ({ item }: { item: Country }) => (
+    <TouchableOpacity 
+      style={styles.countryCard}
+      onPress={() => setSelectedCountry(item.id)}
+    >
+      <Image 
+        source={{ uri: item.image }}
+        style={styles.countryImage}
+      />
+      <View style={styles.countryInfo}>
+        <Text style={styles.countryName}>{item.name}</Text>
+        <Image 
+          source={{ uri: item.flag }}
+          style={styles.countryFlag}
+        />
       </View>
-    </ScrollView>
+    </TouchableOpacity>
+  );
+
+  const renderClub = ({ item }: { item: Club }) => (
+    <TouchableOpacity 
+      style={[
+        styles.clubCard,
+        voting && styles.clubCardDisabled
+      ]}
+      onPress={() => handleVote(item.id)}
+      disabled={voting}
+    >
+      <Image 
+        source={{ uri: item.logo }}
+        style={styles.clubLogo}
+      />
+      <View style={styles.clubInfo}>
+        <Text style={styles.clubName}>{item.name}</Text>
+        <Text style={styles.clubVotes}>Votes: {item.votes_count}</Text>
+      </View>
+      {voting && <ActivityIndicator size="small" color="#6C47FF" />}
+    </TouchableOpacity>
+  );
+
+  const handleVote = async (clubId: number) => {
+    if (voting) return;
+    
+    setVoting(true);
+    try {
+      await api.submitVote(route.params.topicId, clubId);
+      Alert.alert(
+        'Success', 
+        'Your vote has been recorded', 
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to submit vote';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#6C47FF" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {!selectedCountry ? (
+        // Show countries list
+        <FlatList
+          data={topic?.countries}
+          renderItem={renderCountry}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.listContainer}
+        />
+      ) : (
+        // Show clubs list for selected country
+        <>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => setSelectedCountry(null)}
+            disabled={voting}
+          >
+            <Text style={styles.backButtonText}>← Back to Countries</Text>
+          </TouchableOpacity>
+          <FlatList
+            data={topic?.countries.find(c => c.id === selectedCountry)?.clubs}
+            renderItem={renderClub}
+            keyExtractor={item => item.id.toString()}
+            contentContainerStyle={styles.listContainer}
+          />
+        </>
+      )}
+    </View>
   );
 };
 
@@ -155,37 +153,90 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
-  content: {
-    padding: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  pickerContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-  },
-  voteButton: {
-    backgroundColor: '#6C47FF',
-    height: 50,
-    borderRadius: 25,
+  centered: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 32,
   },
-  disabledButton: {
-    backgroundColor: '#A99BFF',
+  listContainer: {
+    padding: 16,
   },
-  voteButtonText: {
-    color: '#fff',
+  countryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  countryImage: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
+  },
+  countryInfo: {
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  countryName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  countryFlag: {
+    width: 30,
+    height: 20,
+    resizeMode: 'contain',
+  },
+  clubCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  clubLogo: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+    marginRight: 12,
+  },
+  clubInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  clubName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#333',
+  },
+  clubVotes: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  backButton: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  backButtonText: {
+    color: '#6C47FF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  clubCardDisabled: {
+    opacity: 0.7,
   },
 });
 
