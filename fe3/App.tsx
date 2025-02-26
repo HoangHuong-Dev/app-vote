@@ -12,11 +12,15 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import { AuthProvider } from './src/context/AuthContext';
+import TopicsScreen from './src/screens/TopicsScreen';
+import VotingScreen from './src/screens/VotingScreen';
 
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Home: undefined;
+  Topics: undefined;
+  VotingScreen: { topicId: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -40,6 +44,16 @@ function App(): React.JSX.Element {
               headerShown: true,
               headerBackVisible: false,
             }}
+          />
+          <Stack.Screen 
+            name="Topics" 
+            component={TopicsScreen}
+            options={{ title: 'Topics' }}
+          />
+          <Stack.Screen 
+            name="VotingScreen" 
+            component={VotingScreen}
+            options={{ title: 'Vote' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

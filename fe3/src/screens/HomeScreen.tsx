@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Animated,
   ScrollView,
-  Image,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
@@ -74,38 +73,30 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Top Teams Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Top Voted Teams</Text>
-          <View style={styles.rankingCard}>
-            <View style={styles.rankItem}>
-              <Text style={styles.rankNumber}>1</Text>
-              <Text style={styles.teamName}>Juventus</Text>
-              <Text style={styles.voteCount}>324 votes</Text>
-            </View>
-            <View style={styles.rankItem}>
-              <Text style={styles.rankNumber}>2</Text>
-              <Text style={styles.teamName}>AC Milan</Text>
-              <Text style={styles.voteCount}>287 votes</Text>
-            </View>
-            <View style={styles.rankItem}>
-              <Text style={styles.rankNumber}>3</Text>
-              <Text style={styles.teamName}>Inter Milan</Text>
-              <Text style={styles.voteCount}>245 votes</Text>
-            </View>
-          </View>
-        </View>
-
         {/* Quick Actions */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>Vote Now</Text>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('Topics')}
+          >
+            <Text style={styles.actionButtonText}>Vote Topics</Text>
+            <Text style={styles.actionDescription}>Browse and vote on football topics</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('Topics')}
+          >
             <Text style={styles.actionButtonText}>Global Rankings</Text>
+            <Text style={styles.actionDescription}>View worldwide team rankings</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>View Statistics</Text>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('Topics')}
+          >
+            <Text style={styles.actionButtonText}>My Votes</Text>
+            <Text style={styles.actionDescription}>See your voting history</Text>
           </TouchableOpacity>
         </View>
 
@@ -163,60 +154,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
   },
-  sectionContainer: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 15,
-  },
-  rankingCard: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 15,
-    padding: 20,
-  },
-  rankItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    paddingBottom: 15,
-  },
-  rankNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6C47FF',
-    width: 30,
-  },
-  teamName: {
-    flex: 1,
-    fontSize: 16,
-    color: '#fff',
-    marginLeft: 10,
-  },
-  voteCount: {
-    fontSize: 14,
-    color: '#888',
-  },
   actionsContainer: {
     marginBottom: 30,
   },
   actionButton: {
     backgroundColor: '#2a2a2a',
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
-    alignItems: 'center',
+    padding: 20,
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: '#6C47FF',
   },
   actionButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  actionDescription: {
+    color: '#888',
+    fontSize: 14,
   },
   logoutButton: {
     backgroundColor: '#ff4757',
@@ -234,4 +191,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen; 
+export default HomeScreen;
