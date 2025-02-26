@@ -13,12 +13,13 @@ export default defineConfig({
         emptyOutDir: true,
         manifest: true,
         rollupOptions: {
-            input: {
-                app: 'resources/js/app.js'
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        return 'vendor';
+                    }
+                }
             }
         }
-    },
-    server: {
-        hmr: false // Disable HMR in production
     }
 });
