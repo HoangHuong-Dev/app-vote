@@ -45,6 +45,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title & Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Countries</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -71,6 +72,15 @@
                             <div class="text-sm font-medium text-gray-900">{{ $topic->title }}</div>
                             <div class="text-sm text-gray-500">{{ Str::limit($topic->description, 50) }}</div>
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex flex-wrap gap-1">
+                                @foreach($topic->countries as $country)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ $country->name }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div>Start: {{ $topic->start_date->format('Y-m-d H:i') }}</div>
                             <div>End: {{ $topic->end_date->format('Y-m-d H:i') }}</div>
@@ -85,7 +95,7 @@
                                 <a href="{{ route('admin.topics.stats', $topic->id) }}" class="text-blue-600 hover:text-blue-900" title="View Statistics">
                                     <i class="fas fa-chart-bar"></i>
                                 </a>
-                                <button onclick="openEditModal({{ $topic->id }}, '{{ $topic->title }}', '{{ $topic->description }}', '{{ $topic->image }}', '{{ $topic->start_date->format('Y-m-d\TH:i') }}', '{{ $topic->end_date->format('Y-m-d\TH:i') }}', {{ $topic->is_active }})" class="text-blue-600 hover:text-blue-900">
+                                <button onclick="openEditModal({{ $topic->id }}, '{{ $topic->title }}', '{{ $topic->description }}', '{{ $topic->image }}', '{{ $topic->start_date->format('Y-m-d\TH:i') }}', '{{ $topic->end_date->format('Y-m-d\TH:i') }}', {{ $topic->is_active }}, {{ $topic->countries->pluck('id') }})" class="text-blue-600 hover:text-blue-900">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button onclick="openDeleteModal({{ $topic->id }})" class="text-red-600 hover:text-red-900">
@@ -124,6 +134,18 @@
                             <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
                             <textarea name="description" rows="3" required
                                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Countries</label>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded">
+                                @foreach($countries as $country)
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" name="countries[]" value="{{ $country->id }}" 
+                                               class="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <span class="ml-2 text-sm text-gray-700">{{ $country->name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
                         </div>
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Image</label>
@@ -204,8 +226,8 @@
         
         // Set default dates
         const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // Adjust for timezone
-        now.setMinutes(0, 0, 0); // Start of hour
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        now.setMinutes(0, 0, 0);
         const startDate = now.toISOString().slice(0, 16);
         
         const endDate = new Date(now);
@@ -218,7 +240,7 @@
         document.getElementById('topicModal').classList.remove('hidden');
     }
 
-    function openEditModal(id, title, description, image, startDate, endDate, isActive) {
+    function openEditModal(id, title, description, image, startDate, endDate, isActive, selectedCountries) {
         document.getElementById('modalTitle').textContent = 'Edit Topic';
         document.getElementById('topicForm').action = `/admin/topics/${id}`;
         document.getElementById('topicForm').querySelector('input[name="_method"]').value = 'PUT';
@@ -229,6 +251,12 @@
         form.querySelector('input[name="start_date"]').value = startDate;
         form.querySelector('input[name="end_date"]').value = endDate;
         form.querySelector('input[name="is_active"]').checked = isActive;
+        
+        // Set selected countries using checkboxes
+        const countryCheckboxes = form.querySelectorAll('input[name="countries[]"]');
+        countryCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectedCountries.includes(parseInt(checkbox.value));
+        });
         
         if (image) {
             document.getElementById('imagePreview').src = image;
@@ -281,6 +309,30 @@
     
     .dataTables_wrapper .dataTables_paginate .paginate_button.current {
         @apply bg-blue-100 text-blue-700 hover:bg-blue-200;
+    }
+
+    /* Checkbox container styling */
+    .form-checkbox {
+        @apply rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-offset-0 focus:ring-blue-200 focus:ring-opacity-50;
+    }
+
+    /* Scrollbar styling */
+    .overflow-y-auto {
+        scrollbar-width: thin;
+        scrollbar-color: #CBD5E0 #EDF2F7;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-track {
+        background: #EDF2F7;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+        background-color: #CBD5E0;
+        border-radius: 3px;
     }
 </style>
 @endsection 

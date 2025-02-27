@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Topic;
 use App\Models\Vote;
+use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +15,7 @@ class AdminTopicController extends Controller
     public function index()
     {
         $topics = Topic::query()
+            ->with('countries')
             ->when(request('search'), function($query, $search) {
                 $query->where('title', 'like', "%{$search}%")
                       ->orWhere('description', 'like', "%{$search}%");
@@ -21,7 +23,8 @@ class AdminTopicController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('admin.topics.index', compact('topics'));
+        $countries = Country::all();
+        return view('admin.topics.index', compact('topics', 'countries'));
     }
 
     public function store(Request $request)
@@ -33,7 +36,9 @@ class AdminTopicController extends Controller
                 'image' => 'required|image|max:2048',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after:start_date',
-                'is_active' => 'nullable|boolean'
+                'is_active' => 'nullable|boolean',
+                'countries' => 'required|array',
+                'countries.*' => 'exists:countries,id'
             ]);
 
             if ($request->hasFile('image')) {
@@ -44,7 +49,9 @@ class AdminTopicController extends Controller
 
             $validated['is_active'] = $request->has('is_active');
 
-            Topic::create($validated);
+            $topic = Topic::create($validated);
+            $topic->countries()->attach($request->countries);
+
             return redirect()->route('admin.topics.index')->with('success', 'Topic created successfully.');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to create topic: ' . $e->getMessage())->withInput();
@@ -59,7 +66,9 @@ class AdminTopicController extends Controller
             'image' => 'nullable|image|max:2048',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after:start_date',
-            'is_active' => 'nullable|boolean'
+            'is_active' => 'nullable|boolean',
+            'countries' => 'required|array',
+            'countries.*' => 'exists:countries,id'
         ]);
 
         if ($request->hasFile('image')) {
@@ -74,6 +83,8 @@ class AdminTopicController extends Controller
         $validated['is_active'] = $request->has('is_active');
 
         $topic->update($validated);
+        $topic->countries()->sync($request->countries);
+        
         return redirect()->route('admin.topics.index')->with('success', 'Topic updated successfully.');
     }
 
@@ -83,6 +94,7 @@ class AdminTopicController extends Controller
             unlink(public_path($topic->image));
         }
         
+        $topic->countries()->detach();
         $topic->delete();
         return redirect()->route('admin.topics.index')->with('success', 'Topic deleted successfully.');
     }
