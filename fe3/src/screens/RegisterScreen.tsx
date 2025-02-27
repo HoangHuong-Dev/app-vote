@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  ImageBackground,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import axios, { AxiosError } from 'axios';
@@ -82,97 +83,109 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <View style={styles.logoIcon}>
-          <View style={styles.logoCircle}>
-            <View style={styles.logoRocket} />
+    <ImageBackground 
+      source={require('../assets/bg-login.jpg')}
+      style={styles.container}
+    >
+      <View style={styles.overlay}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoIcon}>
+            <View style={styles.logoCircle}>
+              <View style={styles.logoRocket} />
+            </View>
           </View>
-        </View>
-        <Text style={styles.welcomeText}>Create Account</Text>
-        <Text style={styles.subtitleText}>Please fill in the form to continue</Text>
-      </View>
-
-      <View style={styles.formContainer}>
-        {errors.general && (
-          <View style={styles.generalErrorContainer}>
-            <Text style={styles.generalErrorText}>{errors.general}</Text>
-          </View>
-        )}
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.input, errors.name ? styles.inputError : null]}
-            placeholder="Full Name"
-            value={name}
-            onChangeText={(text) => {
-              setName(text);
-              setErrors(prev => ({...prev, name: undefined, general: undefined}));
-            }}
-            autoCapitalize="words"
-            editable={!isLoading}
-          />
-          {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+          <Text style={styles.welcomeText}>Create Account</Text>
+          <Text style={styles.subtitleText}>Please fill in the form to continue</Text>
         </View>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.input, errors.email ? styles.inputError : null]}
-            placeholder="Email"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              setErrors(prev => ({...prev, email: undefined, general: undefined}));
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!isLoading}
-          />
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-        </View>
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.input, errors.password ? styles.inputError : null]}
-            placeholder="Password"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              setErrors(prev => ({...prev, password: undefined, general: undefined}));
-            }}
-            secureTextEntry
-            editable={!isLoading}
-          />
-          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-        </View>
-
-        <TouchableOpacity 
-          style={[styles.registerButton, isLoading && styles.registerButtonDisabled]} 
-          onPress={handleRegister}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.registerButtonText}>SIGN UP</Text>
+        <View style={styles.formContainer}>
+          {errors.general && (
+            <View style={styles.generalErrorContainer}>
+              <Text style={styles.generalErrorText}>{errors.general}</Text>
+            </View>
           )}
-        </TouchableOpacity>
 
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')} disabled={isLoading}>
-            <Text style={styles.loginLink}>Login</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[styles.input, errors.name ? styles.inputError : null]}
+              placeholder="Full Name"
+              placeholderTextColor="#6c757d"
+              value={name}
+              onChangeText={(text) => {
+                setName(text);
+                setErrors(prev => ({...prev, name: undefined, general: undefined}));
+              }}
+              autoCapitalize="words"
+              editable={!isLoading}
+            />
+            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[styles.input, errors.email ? styles.inputError : null]}
+              placeholder="Email"
+              placeholderTextColor="#6c757d"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                setErrors(prev => ({...prev, email: undefined, general: undefined}));
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              editable={!isLoading}
+            />
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[styles.input, errors.password ? styles.inputError : null]}
+              placeholder="Password"
+              placeholderTextColor="#6c757d"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                setErrors(prev => ({...prev, password: undefined, general: undefined}));
+              }}
+              secureTextEntry
+              editable={!isLoading}
+            />
+            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.registerButton, isLoading && styles.registerButtonDisabled]} 
+            onPress={handleRegister}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.registerButtonText}>SIGN UP</Text>
+            )}
           </TouchableOpacity>
+
+          <View style={styles.loginContainer}>
+            <Text style={styles.loginText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')} disabled={isLoading}>
+              <Text style={styles.loginLink}>Login</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    width: '100%',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: 20,
   },
   logoContainer: {
@@ -190,7 +203,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#6C47FF',
+    backgroundColor: '#ff3b30',
     justifyContent: 'center',
     alignItems: 'center',
     transform: [{ rotate: '45deg' }],
@@ -203,29 +216,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   welcomeText: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: '600',
     marginTop: 20,
-    color: '#000',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
   },
   subtitleText: {
     fontSize: 16,
-    color: '#666',
+    color: '#fff',
     marginTop: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
   },
   formContainer: {
     width: '100%',
   },
   generalErrorContainer: {
-    backgroundColor: '#ffe6e6',
+    backgroundColor: 'rgba(220, 53, 69, 0.9)',
     borderRadius: 8,
     padding: 12,
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#ff4757',
   },
   generalErrorText: {
-    color: '#ff4757',
+    color: '#fff',
     fontSize: 14,
     textAlign: 'center',
   },
@@ -234,37 +251,41 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 8,
     paddingHorizontal: 15,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    color: '#fff',
   },
   inputError: {
-    borderColor: '#ff4757',
+    borderColor: '#dc3545',
   },
   errorText: {
-    color: '#ff4757',
+    color: '#ff3b30',
     fontSize: 12,
     marginTop: 5,
     marginLeft: 5,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
   },
   registerButton: {
-    backgroundColor: '#6C47FF',
+    backgroundColor: '#ff3b30',
     height: 50,
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
     elevation: 3,
-    shadowColor: '#6C47FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowColor: '#ff3b30',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
     shadowRadius: 4,
   },
   registerButtonDisabled: {
-    backgroundColor: '#A99BFF',
+    backgroundColor: 'rgba(255, 59, 48, 0.5)',
   },
   registerButtonText: {
     color: '#fff',
@@ -277,13 +298,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   loginText: {
-    color: '#666',
+    color: '#fff',
     fontSize: 14,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
   },
   loginLink: {
-    color: '#6C47FF',
+    color: '#ff3b30',
     fontSize: 14,
     fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
   },
 });
 

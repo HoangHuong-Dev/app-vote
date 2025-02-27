@@ -84,7 +84,7 @@ const CountriesScreen: React.FC<CountriesScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#f8f9fa',
   },
   content: {
     flex: 1,
@@ -95,9 +95,9 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerText: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#212529',
   },
   listContainer: {
     padding: 20,
@@ -107,24 +107,28 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   countryCard: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
+    width: itemWidth,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderWidth: 3,
+    borderColor: '#e9ecef',
   },
   countryImage: {
     width: '100%',
-    height: 120,
+    height: itemWidth * 0.75,
     resizeMode: 'cover',
   },
   countryInfo: {
-    padding: 10,
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
   },
   countryName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: '#212529',
     textAlign: 'center',
   },
 });

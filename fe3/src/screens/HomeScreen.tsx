@@ -121,11 +121,11 @@ const itemWidth = (windowWidth - 60) / 2; // 60 = padding (20) * 2 + gap between
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#f8f9fa',
   },
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#f8f9fa',
   },
   welcomeContainer: {
     padding: 20,
@@ -136,19 +136,19 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 20,
-    color: '#888',
+    color: '#6c757d',
   },
   nameText: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#212529',
     marginTop: 5,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 15,
+    color: '#212529',
+    marginBottom: 20,
   },
   topicsContainer: {
     marginBottom: 30,
@@ -159,24 +159,29 @@ const styles = StyleSheet.create({
   },
   topicItem: {
     width: itemWidth,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#e9ecef',
   },
   topicImage: {
     width: '100%',
-    height: 120,
+    height: itemWidth * 0.75,
     resizeMode: 'cover',
   },
   topicTitle: {
-    color: '#fff',
-    fontSize: 14,
+    color: '#212529',
+    fontSize: 16,
     fontWeight: '600',
-    padding: 10,
+    padding: 16,
     textAlign: 'center',
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
   },
   logoutButton: {
-    backgroundColor: '#ff4757',
+    backgroundColor: '#dc3545',
     height: 50,
     borderRadius: 25,
     justifyContent: 'center',
