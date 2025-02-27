@@ -19,7 +19,7 @@ Route::get('/clubs', [ClubController::class, 'index']);
 Route::get('/clubs/{club}', [ClubController::class, 'show']);
 Route::get('/topics', [TopicController::class, 'index']);
 Route::get('/topics/{topic}', [TopicController::class, 'show']);
-Route::get('/rankings/country/{country}', [RankingController::class, 'getClubRankingsByCountry']);
+Route::get('/rankings/topics/{topic}', [RankingController::class, 'getTopClubsByTopic']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

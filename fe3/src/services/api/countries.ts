@@ -1,5 +1,6 @@
 import network from '../network/network';
 import { AxiosResponse } from 'axios';
+import { Club } from './clubs';
 
 export type Country = {
   id: number;
