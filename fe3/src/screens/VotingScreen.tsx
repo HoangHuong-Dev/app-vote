@@ -49,8 +49,8 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
 
   const fetchTopicDetails = async () => {
     try {
-      const response = await api.getTopicDetails(route.params.topicId);
-      setTopic(response as TopicWithDetails);
+      const response = await api.getTopicDetails(route.params.topicId) as TopicWithDetails;
+      setTopic(response);
       setIsTopicActive(response.is_active ?? true);
     } catch (err) {
       Alert.alert('Error', 'Failed to load topic details');
@@ -150,7 +150,7 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
         {!selectedCountry ? (
           <>
             <View style={styles.header}>
-              <Text style={styles.headerText}>Chọn Quốc Gia</Text>
+              <Text style={styles.headerText}>Select Country</Text>
             </View>
             <FlatList
               key="countries-grid"
@@ -170,9 +170,9 @@ const VotingScreen: React.FC<VotingScreenProps> = ({ navigation, route }) => {
                 onPress={() => setSelectedCountry(null)}
                 disabled={voting}
               >
-                <Text style={styles.backButtonText}>← Quay lại</Text>
+                <Text style={styles.backButtonText}>← Back</Text>
               </TouchableOpacity>
-              <Text style={styles.headerText}>Chọn Câu Lạc Bộ</Text>
+              <Text style={styles.headerText}>Select Club</Text>
             </View>
             <FlatList
               key="clubs-list"

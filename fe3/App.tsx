@@ -12,7 +12,6 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import { AuthProvider } from './src/context/AuthContext';
-import TopicsScreen from './src/screens/TopicsScreen';
 import VotingScreen from './src/screens/VotingScreen';
 import CountriesScreen from './src/screens/CountriesScreen';
 import RankingsScreen from './src/screens/RankingsScreen';
@@ -49,11 +48,6 @@ function App(): React.JSX.Element {
               headerShown: true,
               headerBackVisible: false,
             }}
-          />
-          <Stack.Screen 
-            name="Topics" 
-            component={TopicsScreen}
-            options={{ title: 'Topics' }}
           />
           <Stack.Screen 
             name="VotingScreen" 

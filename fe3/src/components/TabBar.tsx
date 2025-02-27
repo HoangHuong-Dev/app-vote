@@ -20,21 +20,21 @@ const TabBar = ({ navigation, onLogout }: TabBarProps) => {
         style={styles.tabItem} 
         onPress={() => navigation.navigate('Home')}
       >
-        <Text style={styles.tabText}>Trang chủ</Text>
+        <Text style={styles.tabText}>Home</Text>
       </TouchableOpacity>
       
       <TouchableOpacity 
         style={styles.tabItem}
         onPress={() => navigation.navigate('Countries')}
       >
-        <Text style={styles.tabText}>Bóng đá</Text>
+        <Text style={styles.tabText}>Football</Text>
       </TouchableOpacity>
       
       <TouchableOpacity 
         style={styles.tabItem}
         onPress={onLogout}
       >
-        <Text style={styles.tabText}>Đăng xuất</Text>
+        <Text style={styles.tabText}>Logout</Text>
       </TouchableOpacity>
     </View>
   );

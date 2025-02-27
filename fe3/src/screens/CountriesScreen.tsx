@@ -65,7 +65,7 @@ const CountriesScreen: React.FC<CountriesScreenProps> = ({ navigation }) => {
     <View style={styles.mainContainer}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.headerText}>Chọn Quốc Gia</Text>
+          <Text style={styles.headerText}>Select Country</Text>
         </View>
         <FlatList
           data={countries}

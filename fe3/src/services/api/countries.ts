@@ -13,7 +13,7 @@ export type Country = {
 };
 
 export const getCountries = (topicId?: number) => {
-  const params = topicId ? `?topic_id=${topicId}` : '';
+  const params = topicId ? `?topic_id=${topicId}` : '?topic_id=1';
   return new Promise((resolve, reject) => {
     network
       .authorizedRequest(`countries${params}`, 'GET')

@@ -93,7 +93,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         {/* Header Section */}
         <View style={styles.header}>
-          <Text style={styles.nameText}>Xin chào {user?.name || 'User'}</Text>
+          <Text style={styles.nameText}>Welcome {user?.name || 'User'}</Text>
         </View>
 
         {/* Topics Grid */}

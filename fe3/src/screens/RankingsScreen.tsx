@@ -91,7 +91,7 @@ const RankingsScreen: React.FC<RankingsScreenProps> = ({ navigation, route }) =>
     <View style={styles.mainContainer}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.headerText}>Bảng Xếp Hạng</Text>
+          <Text style={styles.headerText}>Rankings</Text>
           <Text style={styles.countryName}>{rankings?.country.name}</Text>
         </View>
         <FlatList
