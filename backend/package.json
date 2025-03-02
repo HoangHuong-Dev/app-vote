@@ -2,21 +2,6 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vite",
-        "build": "NODE_OPTIONS='--max-old-space-size=512' vite build --emptyOutDir",
-        "start": "vite preview",
-        "prod": "NODE_OPTIONS='--max-old-space-size=512' yarn install && yarn build"
-    },
-    "devDependencies": {
-        "autoprefixer": "^10.4.20",
-        "axios": "^1.6.4",
-        "laravel-vite-plugin": "^1.0.0",
-        "postcss": "^8.4.35",
-        "tailwindcss": "^3.4.1",
-        "vite": "^5.0.0"
-    },
-    "dependencies": {
-        "@fortawesome/fontawesome-free": "^6.7.2",
-        "vue": "^3.2.25"
+        "start": "php artisan serve"
     }
 }
