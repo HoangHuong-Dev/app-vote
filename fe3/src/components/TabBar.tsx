@@ -17,18 +17,18 @@ const TabBar = ({ navigation, onLogout }: TabBarProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
           style={styles.tabItem} 
           onPress={() => navigation.navigate('Home')}
         >
           <Text style={styles.tabText}>Home</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         
         <TouchableOpacity 
           style={styles.tabItem}
           onPress={() => navigation.navigate('Countries')}
         >
-          <Text style={styles.tabText}>Football</Text>
+          <Text style={styles.tabText}>Rankings</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 

@@ -22,13 +22,23 @@ export const login = (email: string, password: string) => {
   });
 };
 
-export const register = (name: string, email: string, password: string) => {
+export const register = (
+  name: string, 
+  email: string, 
+  password: string,
+  topicId: number,
+  countryId: number,
+  clubId: number
+) => {
   return new Promise((resolve, reject) => {
     network
       .unAuthorizedRequest('register', 'POST', {
         name,
         email,
         password,
+        topic_id: topicId,
+        country_id: countryId,
+        club_id: clubId
       })
       .then((res: AxiosResponse) => {
         if (res.status >= 400) {
