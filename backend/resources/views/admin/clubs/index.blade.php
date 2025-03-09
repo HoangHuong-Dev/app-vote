@@ -29,7 +29,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logo</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votes</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -62,7 +62,16 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $club->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $club->country->name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            @if($club->city)
+                                {{ $club->city->name }} 
+                                @if($club->city->country)
+                                    ({{ $club->city->country->name }})
+                                @endif
+                            @else
+                                <span class="text-red-500">No city assigned</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $club->votes_count }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $club->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
@@ -71,7 +80,16 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             <div class="flex space-x-3">
-                                <button onclick="openEditModal({{ $club->id }}, '{{ $club->name }}', {{ $club->country_id }}, '{{ $club->logo }}', '{{ $club->image }}', '{{ $club->description }}', {{ $club->is_active }})" class="text-blue-600 hover:text-blue-900">
+                                <button onclick="openEditModal(
+                                    {{ $club->id }}, 
+                                    '{{ $club->name }}', 
+                                    {{ $club->city_id ?? 'null' }}, 
+                                    {{ $club->city && $club->city->country ? $club->city->country->id : 'null' }}, 
+                                    '{{ $club->logo ?? '' }}', 
+                                    '{{ $club->image ?? '' }}', 
+                                    '{{ addslashes($club->description ?? '') }}', 
+                                    {{ $club->is_active ? 'true' : 'false' }}
+                                )" class="text-blue-600 hover:text-blue-900">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button onclick="openDeleteModal({{ $club->id }})" class="text-red-600 hover:text-red-900">
@@ -106,10 +124,19 @@
                         </div>
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Country</label>
-                            <select name="country_id" required class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <select id="country_selector" name="country_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                                 <option value="">Select Country</option>
                                 @foreach($countries as $country)
                                     <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">City</label>
+                            <select name="city_id" id="city_selector" required class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="">Select City</option>
+                                @foreach($cities as $city)
+                                    <option value="{{ $city->id }}" data-country="{{ $city->country_id }}">{{ $city->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -214,29 +241,100 @@
         document.getElementById('clubForm').querySelector('input[name="_method"]').value = 'POST';
         document.getElementById('clubForm').reset();
         document.getElementById('clubModal').classList.remove('hidden');
+        
+        // Hide all city options initially
+        const citySelector = document.getElementById('city_selector');
+        const cityOptions = citySelector.querySelectorAll('option');
+        cityOptions.forEach(option => {
+            if (option.value === '') {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
     }
 
-    function openEditModal(id, name, countryId, logo, image, description, isActive) {
+    function openEditModal(id, name, cityId, countryId, logo, image, description, isActive) {
         document.getElementById('modalTitle').textContent = 'Edit Club';
         document.getElementById('clubForm').action = `/admin/clubs/${id}`;
         document.getElementById('clubForm').querySelector('input[name="_method"]').value = 'PUT';
         
         const form = document.getElementById('clubForm');
-        form.querySelector('input[name="name"]').value = name;
-        form.querySelector('select[name="country_id"]').value = countryId;
+        form.querySelector('input[name="name"]').value = name || '';
+        
+        // Set country first if exists
+        const countrySelector = document.getElementById('country_selector');
+        if (countryId && countryId !== 'null') {
+            countrySelector.value = countryId;
+            
+            // Filter cities based on country
+            filterCitiesByCountry(countryId);
+            
+            // Set city if exists
+            if (cityId && cityId !== 'null') {
+                setTimeout(() => {
+                    const citySelector = document.getElementById('city_selector');
+                    citySelector.value = cityId;
+                }, 100);
+            }
+        } else {
+            countrySelector.value = '';
+            // Reset city selection
+            const citySelector = document.getElementById('city_selector');
+            citySelector.value = '';
+        }
+        
         form.querySelector('textarea[name="description"]').value = description || '';
         form.querySelector('input[name="is_active"]').checked = isActive;
         
         // Preview existing images
-        if (logo) {
-            document.getElementById('logoPreview').src = logo;
+        const logoPreview = document.getElementById('logoPreview');
+        if (logo && logo !== '') {
+            logoPreview.src = logo;
+            logoPreview.style.display = 'block';
+        } else {
+            logoPreview.style.display = 'none';
         }
-        if (image) {
-            document.getElementById('imagePreview').src = image;
+        
+        const imagePreview = document.getElementById('imagePreview');
+        if (image && image !== '') {
+            imagePreview.src = image;
+            imagePreview.style.display = 'block';
+        } else {
+            imagePreview.style.display = 'none';
         }
         
         document.getElementById('clubModal').classList.remove('hidden');
     }
+    
+    // Filter cities based on selected country
+    function filterCitiesByCountry(countryId) {
+        if (!countryId || countryId === 'null') return;
+        
+        const citySelector = document.getElementById('city_selector');
+        const cityOptions = citySelector.querySelectorAll('option');
+        
+        cityOptions.forEach(option => {
+            if (option.value === '' || option.getAttribute('data-country') === countryId.toString()) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        // Reset city selection
+        citySelector.value = '';
+    }
+    
+    // Add event listener to country selector
+    document.addEventListener('DOMContentLoaded', function() {
+        const countrySelector = document.getElementById('country_selector');
+        if (countrySelector) {
+            countrySelector.addEventListener('change', function() {
+                filterCitiesByCountry(this.value);
+            });
+        }
+    });
 
     function closeModal() {
         document.getElementById('clubModal').classList.add('hidden');

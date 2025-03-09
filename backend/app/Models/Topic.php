@@ -40,12 +40,14 @@ class Topic extends Model
     {
         return $this->hasManyThrough(
             Club::class,
-            Country::class,
-            'id', // Foreign key on country_topic table...
-            'country_id', // Foreign key on clubs table...
-            'id', // Local key on topics table...
-            'id' // Local key on countries table...
-        );
+            City::class,
+            'country_id', // khóa ngoại trên cities phù hợp với các quốc gia từ relationship countries
+            'city_id', // khóa ngoại trên clubs
+            'id', // ID của topics
+            'id' // ID của cities
+        )->whereHas('city.country', function($query) {
+            $query->whereIn('countries.id', $this->countries->pluck('id')->toArray());
+        });
     }
 
     public function isActive()

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('logo')->nullable();
             $table->string('image')->nullable();
-            $table->foreignId('country_id')->constrained()->onDelete('cascade');
+            $table->foreignId('city_id')->constrained()->onDelete('cascade');
             $table->text('description')->nullable();
             $table->integer('votes_count')->default(0);
             $table->boolean('is_active')->default(true);

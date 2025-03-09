@@ -8,6 +8,7 @@ use App\Http\Controllers\API\ClubController;
 use App\Http\Controllers\API\TopicController;
 use App\Http\Controllers\API\VoteController;
 use App\Http\Controllers\API\RankingController;
+use App\Http\Controllers\API\CityController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -15,11 +16,15 @@ Route::post('/login', [AuthController::class, 'login']);
 // Routes không cần authentication
 Route::get('/countries', [CountryController::class, 'index']);
 Route::get('/countries/{country}', [CountryController::class, 'show']);
+Route::get('/cities', [CityController::class, 'index']);
+Route::get('/cities/{city}', [CityController::class, 'show']);
+Route::get('/countries/{country}/cities', [CityController::class, 'getCitiesByCountry']);
 Route::get('/clubs', [ClubController::class, 'index']);
 Route::get('/clubs/{club}', [ClubController::class, 'show']);
 Route::get('/topics', [TopicController::class, 'index']);
 Route::get('/topics/{topic}', [TopicController::class, 'show']);
 Route::get('/rankings/country/{country}', [RankingController::class, 'getClubRankingsByCountry']);
+Route::get('/rankings/city/{city}', [RankingController::class, 'getClubRankingsByCity']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -31,6 +36,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/countries', [CountryController::class, 'store']);
     Route::put('/countries/{country}', [CountryController::class, 'update']);
     Route::delete('/countries/{country}', [CountryController::class, 'destroy']);
+
+    // City routes (chỉ admin mới có quyền thêm/sửa/xóa)
+    Route::post('/cities', [CityController::class, 'store']);
+    Route::put('/cities/{city}', [CityController::class, 'update']);
+    Route::delete('/cities/{city}', [CityController::class, 'destroy']);
 
     // Club routes (chỉ admin mới có quyền thêm/sửa/xóa)
     Route::post('/clubs', [ClubController::class, 'store']);

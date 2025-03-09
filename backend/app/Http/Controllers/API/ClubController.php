@@ -4,31 +4,39 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Club;
+use App\Models\City;
 use Illuminate\Http\Request;
 
 class ClubController extends Controller
 {
     /**
      * Lấy danh sách tất cả các câu lạc bộ
-     * Có thể lọc theo country_id và topic_id
+     * Có thể lọc theo city_id, country_id và topic_id
      */
     public function index(Request $request)
     {
         $query = Club::query();
         
+        // Filter by city_id
+        if ($request->has('city_id')) {
+            $query->where('city_id', $request->city_id);
+        }
+        
         // Filter by country_id
         if ($request->has('country_id')) {
-            $query->where('country_id', $request->country_id);
+            $query->whereHas('city', function($q) use ($request) {
+                $q->where('country_id', $request->country_id);
+            });
         }
 
         // Filter by topic_id through country
         if ($request->has('topic_id')) {
-            $query->whereHas('country.topics', function($q) use ($request) {
+            $query->whereHas('city.country.topics', function($q) use ($request) {
                 $q->where('topics.id', $request->topic_id);
             });
         }
 
-        $clubs = $query->get();
+        $clubs = $query->with('city.country')->get();
 
         // Transform to add full URLs for images
         $clubs->transform(function ($club) {
@@ -47,7 +55,7 @@ class ClubController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'country_id' => 'required|exists:countries,id',
+            'city_id' => 'required|exists:cities,id',
             'logo' => 'nullable|string|url',
             'image' => 'nullable|string|url',
             'description' => 'nullable|string',
@@ -63,7 +71,7 @@ class ClubController extends Controller
      */
     public function show(Club $club)
     {
-        return response()->json($club->load('country'));
+        return response()->json($club->load('city.country'));
     }
 
     /**
@@ -73,7 +81,7 @@ class ClubController extends Controller
     {
         $request->validate([
             'name' => 'string|max:255',
-            'country_id' => 'exists:countries,id',
+            'city_id' => 'exists:cities,id',
             'logo' => 'nullable|string|url',
             'image' => 'nullable|string|url',
             'description' => 'nullable|string',
@@ -81,7 +89,7 @@ class ClubController extends Controller
         ]);
 
         $club->update($request->all());
-        return response()->json($club->load('country'));
+        return response()->json($club->load('city.country'));
     }
 
     /**

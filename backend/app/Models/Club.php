@@ -13,7 +13,7 @@ class Club extends Model
         'name', 
         'logo', 
         'image',
-        'country_id', 
+        'city_id', 
         'description',
         'votes_count',
         'is_active'
@@ -24,9 +24,9 @@ class Club extends Model
         'votes_count' => 'integer'
     ];
 
-    public function country()
+    public function city()
     {
-        return $this->belongsTo(Country::class);
+        return $this->belongsTo(City::class);
     }
 
     public function votes()

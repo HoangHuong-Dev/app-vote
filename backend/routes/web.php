@@ -43,6 +43,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/clubs', [AdminClubController::class, 'store'])->name('admin.clubs.store');
     Route::put('/clubs/{club}', [AdminClubController::class, 'update'])->name('admin.clubs.update');
     Route::delete('/clubs/{club}', [AdminClubController::class, 'destroy'])->name('admin.clubs.destroy');
+    Route::get('/countries/{country}/cities', [AdminClubController::class, 'getCitiesByCountry'])->name('admin.countries.cities');
 
     // Topic management routes
     Route::get('/topics', [AdminTopicController::class, 'index'])->name('admin.topics.index');
