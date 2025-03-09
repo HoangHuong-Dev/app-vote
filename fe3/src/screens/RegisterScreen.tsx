@@ -20,6 +20,7 @@ import api from '../services/api/api';
 import type { Topic } from '../services/api/topics';
 import type { Country } from '../services/api/countries';
 import type { Club } from '../services/api/clubs';
+import type { City } from '../services/api/cities';
 
 type RegisterScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
@@ -31,9 +32,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const [password, setPassword] = useState<string>('');
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [errors, setErrors] = useState<{
     name?: string;
@@ -41,6 +44,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     password?: string;
     topic?: string;
     country?: string;
+    city?: string;
     club?: string;
     general?: string;
   }>({});
@@ -48,6 +52,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const { login } = useAuth();
   const [showTopicSelect, setShowTopicSelect] = useState(false);
   const [showCountrySelect, setShowCountrySelect] = useState(false);
+  const [showCitySelect, setShowCitySelect] = useState(false);
   const [showClubSelect, setShowClubSelect] = useState(false);
 
   useEffect(() => {
@@ -57,14 +62,26 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   useEffect(() => {
     if (selectedTopic) {
       fetchCountries(selectedTopic.id);
+      setSelectedCountry(null);
+      setSelectedCity(null);
+      setSelectedClub(null);
     }
   }, [selectedTopic]);
 
   useEffect(() => {
-    if (selectedCountry && selectedTopic) {
-      fetchClubs(selectedCountry.id, selectedTopic.id);
+    if (selectedCountry) {
+      fetchCities(selectedCountry.id);
+      setSelectedCity(null);
+      setSelectedClub(null);
     }
-  }, [selectedCountry, selectedTopic]);
+  }, [selectedCountry]);
+
+  useEffect(() => {
+    if (selectedCity && selectedTopic) {
+      fetchClubs(selectedCity.id, selectedTopic.id);
+      setSelectedClub(null);
+    }
+  }, [selectedCity]);
 
   const fetchTopics = async () => {
     try {
@@ -84,9 +101,24 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     }
   };
 
-  const fetchClubs = async (countryId: number, topicId: number) => {
+  const fetchCities = async (countryId: number) => {
     try {
-      const response = await api.getClubsByCountryAndTopic(countryId, topicId);
+      console.log('Fetching cities for country:', countryId);
+      const response = await api.getCitiesByCountry(countryId);
+      console.log('Cities response:', response);
+      setCities(response as City[]);
+    } catch (err) {
+      console.error('Failed to fetch cities:', err);
+      setErrors(prev => ({
+        ...prev,
+        city: 'Failed to load cities. Please try again.'
+      }));
+    }
+  };
+
+  const fetchClubs = async (cityId: number, topicId: number) => {
+    try {
+      const response = await api.getClubsByCountryAndTopic(cityId, topicId);
       setClubs(response as Club[]);
     } catch (err) {
       console.error('Failed to fetch clubs:', err);
@@ -100,6 +132,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       password?: string;
       topic?: string;
       country?: string;
+      city?: string;
       club?: string;
     } = {};
     
@@ -134,6 +167,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       newErrors.country = 'Please select a country';
     }
 
+    // Validate city
+    if (!selectedCity) {
+      newErrors.city = 'Please select a city';
+    }
+
     // Validate club
     if (!selectedClub) {
       newErrors.club = 'Please select a club';
@@ -158,7 +196,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         email,
         password,
         selectedTopic!.id,
-        selectedCountry!.id,
+        selectedCity!.id,
         selectedClub!.id
       );
 
@@ -276,8 +314,6 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                         ]}
                         onPress={() => {
                           setSelectedTopic(item);
-                          setSelectedCountry(null);
-                          setSelectedClub(null);
                           setShowTopicSelect(false);
                           setErrors(prev => ({...prev, topic: undefined, general: undefined}));
                         }}
@@ -322,7 +358,6 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                           ]}
                           onPress={() => {
                             setSelectedCountry(item);
-                            setSelectedClub(null);
                             setShowCountrySelect(false);
                             setErrors(prev => ({...prev, country: undefined, general: undefined}));
                           }}
@@ -345,6 +380,51 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           )}
 
           {selectedCountry && (
+            <View style={styles.inputContainer}>
+              <View style={styles.selectContainer}>
+                <TouchableOpacity
+                  style={[styles.input, errors.city ? styles.inputError : null]}
+                  onPress={() => setShowCitySelect(!showCitySelect)}
+                >
+                  <Text style={[styles.selectBoxText, !selectedCity && styles.selectBoxPlaceholder]}>
+                    {selectedCity ? selectedCity.name : 'Select a city'}
+                  </Text>
+                  <Text style={[styles.selectBoxArrow, showCitySelect && styles.selectBoxArrowUp]}>▼</Text>
+                </TouchableOpacity>
+                {showCitySelect && (
+                  <View style={styles.dropdown}>
+                    <FlatList
+                      data={cities}
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdownItem,
+                            selectedCity?.id === item.id && styles.dropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setSelectedCity(item);
+                            setShowCitySelect(false);
+                            setErrors(prev => ({...prev, city: undefined, general: undefined}));
+                          }}
+                        >
+                          <Text style={[
+                            styles.dropdownItemText,
+                            selectedCity?.id === item.id && styles.dropdownItemTextSelected
+                          ]}>
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      keyExtractor={item => item.id.toString()}
+                    />
+                  </View>
+                )}
+              </View>
+              {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
+            </View>
+          )}
+
+          {selectedCity && (
             <View style={styles.inputContainer}>
               <View style={styles.selectContainer}>
                 <TouchableOpacity

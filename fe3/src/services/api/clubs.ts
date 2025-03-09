@@ -1,5 +1,6 @@
 import network from '../network/network';
 import { AxiosResponse } from 'axios';
+import type { City } from './cities';
 
 export type Club = {
   id: number;
@@ -7,15 +8,16 @@ export type Club = {
   logo: string;
   image: string;
   description: string;
-  country_id: number;
+  city_id: number;
+  city?: City;
   votes_count: number;
   is_active: boolean;
 };
 
-export const getClubsByCountryAndTopic = (countryId: number, topicId: number) => {
+export const getClubsByCountryAndTopic = (cityId: number, topicId: number) => {
   return new Promise((resolve, reject) => {
     network
-      .authorizedRequest(`clubs?country_id=${countryId}&topic_id=${topicId}`, 'GET')
+      .authorizedRequest(`clubs?city_id=${cityId}&topic_id=${topicId}`, 'GET')
       .then((res: AxiosResponse) => {
         if (res.status >= 400) {
           reject(res);
