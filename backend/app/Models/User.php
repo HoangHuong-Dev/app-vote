@@ -22,6 +22,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'email_verified_at',
+        'is_admin',
+        'verification_code'
     ];
 
     /**
@@ -43,6 +46,11 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function userTopics()
+    {
+        return $this->hasMany(UserTopic::class);
+    }
 
     public function votes()
     {

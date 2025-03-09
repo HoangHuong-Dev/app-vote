@@ -15,10 +15,12 @@ import { AuthProvider } from './src/context/AuthContext';
 import VotingScreen from './src/screens/VotingScreen';
 import CountriesScreen from './src/screens/CountriesScreen';
 import RankingsScreen from './src/screens/RankingsScreen';
+import EmailVerificationScreen from './src/screens/EmailVerificationScreen';
 
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
+  EmailVerification: { email: string };
   Home: undefined;
   Topics: undefined;
   VotingScreen: { topicId: number };
@@ -41,6 +43,7 @@ function App(): React.JSX.Element {
         >
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
           <Stack.Screen 
             name="Home" 
             component={HomeScreen}

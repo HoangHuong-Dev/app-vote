@@ -2,13 +2,17 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\API\CountryController;
-use App\Http\Controllers\API\ClubController;
-use App\Http\Controllers\API\TopicController;
-use App\Http\Controllers\API\VoteController;
-use App\Http\Controllers\API\RankingController;
-use App\Http\Controllers\API\CityController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CountryController;
+use App\Http\Controllers\Api\ClubController;
+use App\Http\Controllers\Api\TopicController;
+use App\Http\Controllers\Api\VoteController;
+use App\Http\Controllers\Api\RankingController;
+use App\Http\Controllers\Api\CityController;
+use App\Http\Controllers\Api\EmailVerificationController;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\VerificationEmail;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -58,4 +62,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/votes/{vote}', [VoteController::class, 'show']);
     Route::put('/votes/{vote}', [VoteController::class, 'update']);
     Route::delete('/votes/{vote}', [VoteController::class, 'destroy']);
+});
+
+// Email verification routes
+Route::post('verify-email', [EmailVerificationController::class, 'verify']);
+Route::post('resend-verification', [EmailVerificationController::class, 'resend']);
+
+// Test email route
+Route::get('test-email', function() {
+    try {
+        $testEmail = request()->query('email', 'test@example.com');
+        Log::info('Attempting to send test email', ['email' => $testEmail]);
+        
+        Mail::to($testEmail)->send(new VerificationEmail('Test User', '123456'));
+        
+        Log::info('Test email sent successfully');
+        return response()->json(['message' => 'Test email sent successfully']);
+    } catch (\Exception $e) {
+        Log::error('Test email failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json([
+            'message' => 'Failed to send test email',
+            'error' => $e->getMessage()
+        ], 500);
+    }
 }); 

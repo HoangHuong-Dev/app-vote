@@ -3,6 +3,17 @@ import { AxiosResponse } from 'axios';
 
 export type NetworkPromiseResponse<T> = Promise<T>;
 
+export type RegisterResponse = {
+  message: string;
+  email: string;
+};
+
+export type VerifyEmailResponse = {
+  message: string;
+  access_token?: string;
+  user?: any;
+};
+
 export const login = (email: string, password: string) => {
   return new Promise((resolve, reject) => {
     network
@@ -29,7 +40,7 @@ export const register = (
   topicId: number,
   countryId: number,
   clubId: number
-) => {
+): Promise<RegisterResponse> => {
   return new Promise((resolve, reject) => {
     network
       .unAuthorizedRequest('register', 'POST', {
@@ -44,7 +55,44 @@ export const register = (
         if (res.status >= 400) {
           reject(res);
         }
-        resolve(res as any);
+        resolve(res as RegisterResponse);
+      })
+      .catch((err: any) => {
+        reject(err);
+      });
+  });
+};
+
+export const verifyEmail = (email: string, code: string): Promise<VerifyEmailResponse> => {
+  return new Promise((resolve, reject) => {
+    network
+      .unAuthorizedRequest('verify-email', 'POST', {
+        email,
+        code
+      })
+      .then((res: AxiosResponse) => {
+        if (res.status >= 400) {
+          reject(res);
+        }
+        resolve(res as VerifyEmailResponse);
+      })
+      .catch((err: any) => {
+        reject(err);
+      });
+  });
+};
+
+export const resendVerificationCode = (email: string): Promise<{message: string}> => {
+  return new Promise((resolve, reject) => {
+    network
+      .unAuthorizedRequest('resend-verification', 'POST', {
+        email
+      })
+      .then((res: AxiosResponse) => {
+        if (res.status >= 400) {
+          reject(res);
+        }
+        resolve(res as {message: string});
       })
       .catch((err: any) => {
         reject(err);
@@ -54,5 +102,7 @@ export const register = (
 
 export default {
   login,
-  register
+  register,
+  verifyEmail,
+  resendVerificationCode
 };

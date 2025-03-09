@@ -191,7 +191,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
 
     try {
       // Register user
-      const response: any = await api.register(
+      const response = await api.register(
         name,
         email,
         password,
@@ -200,14 +200,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         selectedClub!.id
       );
 
-      // Login after successful registration
-      await login(response?.access_token, response?.user);
-
-      // Submit vote for selected club
-      await api.submitVote(selectedTopic!.id, selectedClub!.id);
-
-      // Navigate to Rankings screen
-      navigation.navigate('Rankings', { countryId: selectedCountry!.id });
+      // Navigate to email verification screen
+      navigation.navigate('EmailVerification', { email });
     } catch (error) {
       const axiosError = error as AxiosError<{message: string}>;
       console.error('Registration error:', axiosError);
