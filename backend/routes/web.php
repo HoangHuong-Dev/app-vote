@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminCountryController;
 use App\Http\Controllers\Admin\AdminClubController;
 use App\Http\Controllers\Admin\AdminTopicController;
 use App\Http\Controllers\Admin\AdminVoteController;
+use App\Http\Controllers\Admin\CityController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -55,4 +56,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/votes', [AdminVoteController::class, 'index'])->name('admin.votes.index');
     Route::get('/votes/{vote}', [AdminVoteController::class, 'show'])->name('admin.votes.show');
     Route::delete('/votes/{vote}', [AdminVoteController::class, 'destroy'])->name('admin.votes.destroy');
+
+    // City management routes
+    Route::resource('cities', CityController::class)->names('admin.cities');
 });

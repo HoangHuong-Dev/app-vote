@@ -46,6 +46,10 @@
                         <i class="fas fa-globe mr-3"></i>
                         Countries
                     </a>
+                    <a href="{{ route('admin.cities.index') }}" class="block py-3 px-4 rounded transition duration-200 hover:bg-gray-700 mb-2">
+                        <i class="fas fa-city mr-3"></i>
+                        Cities
+                    </a>
                     <a href="{{ route('admin.clubs.index') }}" class="block py-3 px-4 rounded transition duration-200 hover:bg-gray-700 mb-2">
                         <i class="fas fa-futbol mr-3"></i>
                         Clubs

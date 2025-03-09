@@ -30,4 +30,9 @@ class Country extends Model
     {
         return $this->belongsToMany(Topic::class, 'country_topic');
     }
+
+    public function cities()
+    {
+        return $this->hasMany(City::class);
+    }
 }
