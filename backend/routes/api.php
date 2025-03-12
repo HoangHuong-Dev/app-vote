@@ -30,6 +30,13 @@ Route::get('/topics/{topic}', [TopicController::class, 'show']);
 Route::get('/rankings/country/{country}', [RankingController::class, 'getClubRankingsByCountry']);
 Route::get('/rankings/city/{city}', [RankingController::class, 'getClubRankingsByCity']);
 
+
+// Rankings routes
+Route::get('/rankings/clubs', [RankingController::class, 'getClubRankings']);
+Route::get('/rankings/countries', [RankingController::class, 'getCountryRankings']);
+Route::get('/rankings/cities', [RankingController::class, 'getCityRankings']);
+Route::get('/clubs/search', [RankingController::class, 'searchClubs']); 
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
@@ -88,4 +95,4 @@ Route::get('test-email', function() {
             'error' => $e->getMessage()
         ], 500);
     }
-}); 
+});

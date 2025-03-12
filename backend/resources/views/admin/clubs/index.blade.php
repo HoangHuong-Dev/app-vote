@@ -31,6 +31,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votes</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -73,6 +74,15 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $club->votes_count }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            @if($club->latitude && $club->longitude)
+                                <span class="text-gray-600">
+                                    {{ number_format($club->latitude, 6) }}, {{ number_format($club->longitude, 6) }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic">No location</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $club->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                 {{ $club->is_active ? 'Active' : 'Inactive' }}
@@ -88,7 +98,9 @@
                                     '{{ $club->logo ?? '' }}', 
                                     '{{ $club->image ?? '' }}', 
                                     '{{ addslashes($club->description ?? '') }}', 
-                                    {{ $club->is_active ? 'true' : 'false' }}
+                                    {{ $club->is_active ? 'true' : 'false' }},
+                                    {{ $club->latitude ?? 'null' }},
+                                    {{ $club->longitude ?? 'null' }}
                                 )" class="text-blue-600 hover:text-blue-900">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -184,6 +196,16 @@
                             <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
                             <textarea name="description" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
                         </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Latitude</label>
+                                <input type="number" name="latitude" step="any" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 45.4642">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Longitude</label>
+                                <input type="number" name="longitude" step="any" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 9.1900">
+                            </div>
+                        </div>
                         <div class="mb-4">
                             <label class="flex items-center">
                                 <input type="checkbox" name="is_active" value="1" class="form-checkbox h-4 w-4 text-blue-600">
@@ -254,7 +276,7 @@
         });
     }
 
-    function openEditModal(id, name, cityId, countryId, logo, image, description, isActive) {
+    function openEditModal(id, name, cityId, countryId, logo, image, description, isActive, latitude, longitude) {
         document.getElementById('modalTitle').textContent = 'Edit Club';
         document.getElementById('clubForm').action = `/admin/clubs/${id}`;
         document.getElementById('clubForm').querySelector('input[name="_method"]').value = 'PUT';
@@ -286,6 +308,12 @@
         
         form.querySelector('textarea[name="description"]').value = description || '';
         form.querySelector('input[name="is_active"]').checked = isActive;
+        
+        // Set latitude and longitude if they exist
+        if (arguments.length > 10) {
+            form.querySelector('input[name="latitude"]').value = latitude || '';
+            form.querySelector('input[name="longitude"]').value = longitude || '';
+        }
         
         // Preview existing images
         const logoPreview = document.getElementById('logoPreview');

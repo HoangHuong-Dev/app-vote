@@ -42,6 +42,8 @@ class AdminClubController extends Controller
             'logo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'description' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean'
         ]);
 
@@ -69,6 +71,8 @@ class AdminClubController extends Controller
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'description' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean'
         ]);
 

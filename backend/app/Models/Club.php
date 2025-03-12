@@ -16,7 +16,9 @@ class Club extends Model
         'city_id', 
         'description',
         'votes_count',
-        'is_active'
+        'is_active',
+        'latitude',
+        'longitude'
     ];
 
     protected $casts = [
