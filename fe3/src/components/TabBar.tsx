@@ -23,13 +23,20 @@ const TabBar = ({ navigation, onLogout }: TabBarProps) => {
         >
           <Text style={styles.tabText}>Home</Text>
         </TouchableOpacity> */}
-        
+
         <TouchableOpacity 
+          style={styles.tabItem}
+          onPress={() => navigation.navigate('GlobalRanking')}
+        >
+          <Text style={styles.tabText}>Global</Text>
+        </TouchableOpacity>
+        
+        {/* <TouchableOpacity 
           style={styles.tabItem}
           onPress={() => navigation.navigate('Countries')}
         >
           <Text style={styles.tabText}>Rankings</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         
         <TouchableOpacity 
           style={styles.tabItem}
