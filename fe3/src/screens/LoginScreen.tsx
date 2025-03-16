@@ -57,7 +57,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     try {
       const response: any = await api.login(email, password);
       login(response?.access_token, response?.user);
-      navigation.navigate('Countries');
+      navigation.navigate('GlobalRanking');
     } catch (error) {
       const axiosError = error as AxiosError<{message: string}>;
       console.error('Login error:', axiosError);

@@ -30,18 +30,17 @@ Route::get('/topics/{topic}', [TopicController::class, 'show']);
 Route::get('/rankings/country/{country}', [RankingController::class, 'getClubRankingsByCountry']);
 Route::get('/rankings/city/{city}', [RankingController::class, 'getClubRankingsByCity']);
 
-
-// Rankings routes
-Route::get('/rankings/clubs', [RankingController::class, 'getClubRankings']);
-Route::get('/rankings/countries', [RankingController::class, 'getCountryRankings']);
-Route::get('/rankings/cities', [RankingController::class, 'getCityRankings']);
-Route::get('/clubs/search', [RankingController::class, 'searchClubs']); 
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    // Rankings routes (yêu cầu đăng nhập)
+    Route::get('/rankings/clubs', [RankingController::class, 'getClubRankings']);
+    Route::get('/rankings/countries', [RankingController::class, 'getCountryRankings']);
+    Route::get('/rankings/cities', [RankingController::class, 'getCityRankings']);
+    Route::get('/clubs/search', [RankingController::class, 'searchClubs']);
 
     // Country routes (chỉ admin mới có quyền thêm/sửa/xóa)
     Route::post('/countries', [CountryController::class, 'store']);

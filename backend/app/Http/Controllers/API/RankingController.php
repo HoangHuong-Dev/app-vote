@@ -11,13 +11,20 @@ use Illuminate\Support\Facades\DB;
 
 class RankingController extends Controller
 {
-    public function getClubRankings()
+    public function getClubRankings(Request $request)
     {
+        $user = $request->user();
+        $userVotedClub = null;
+        
+        if ($user) {
+            $userVotedClub = $user->votes()->first();
+        }
+
         $rankings = Club::with(['city.country'])
             ->where('is_active', true)
             ->orderByDesc('votes_count')
             ->get()
-            ->map(function ($club) {
+            ->map(function ($club) use ($userVotedClub) {
                 return [
                     'id' => $club->id,
                     'name' => $club->name,
@@ -31,7 +38,10 @@ class RankingController extends Controller
                     ],
                     'latitude' => $club->latitude,
                     'longitude' => $club->longitude,
-                    'votes_count' => $club->votes_count
+                    'votes_count' => $club->votes_count,
+                    'color' => $club->color ?? '#' . substr(md5($club->name), 0, 6), // Tạo màu ngẫu nhiên nếu không có màu
+                    'is_user_voted' => $userVotedClub ? $userVotedClub->club_id === $club->id : false,
+                    'logo' => $club->logo ? asset($club->logo) : null,
                 ];
             });
 
