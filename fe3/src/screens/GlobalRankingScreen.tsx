@@ -71,7 +71,6 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
       
       // Call the API and handle the response
       const response = await getClubRankings() as AxiosResponse;
-      console.log('API Response:', response);
       
       // Kiểm tra cấu trúc dữ liệu trả về
       if (response && response.data) {
@@ -89,9 +88,6 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
           console.error('Unexpected response structure:', response.data);
           throw new Error('Invalid response format: Data is not an array');
         }
-      } else {
-        console.error('No data in response:', response);
-        throw new Error('Invalid response format: No data');
       }
     } catch (err: any) {
       console.error('Error fetching clubs:', err);
