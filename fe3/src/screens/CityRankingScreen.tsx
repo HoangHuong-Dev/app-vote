@@ -54,7 +54,6 @@ const CityRankingScreen: React.FC<CityRankingScreenProps> = ({ navigation }) => 
       
       // Call the API and handle the response
       const response = await getCityRankings() as AxiosResponse;
-      console.log('API Response:', response);
       
       // The API returns data directly in the response
       if (response && response.data) {
