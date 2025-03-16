@@ -40,7 +40,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rankings/clubs', [RankingController::class, 'getClubRankings']);
     Route::get('/rankings/countries', [RankingController::class, 'getCountryRankings']);
     Route::get('/rankings/cities', [RankingController::class, 'getCityRankings']);
-    Route::get('/clubs/search', [RankingController::class, 'searchClubs']);
 
     // Country routes (chỉ admin mới có quyền thêm/sửa/xóa)
     Route::post('/countries', [CountryController::class, 'store']);

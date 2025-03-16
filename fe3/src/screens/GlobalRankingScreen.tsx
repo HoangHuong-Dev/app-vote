@@ -7,54 +7,122 @@ import {
   Text,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useAuth } from '../context/AuthContext';
 import TabBar from '../components/TabBar';
+import { getClubRankings, searchClubs } from '../services/api/rankings';
+import { AxiosResponse } from 'axios';
 
+// Define the Club interface based on the API response from RankingController
 interface Club {
   id: number;
   name: string;
-  location: [number, number];
-  votes: number;
+  city: {
+    id: number;
+    name: string;
+    country: {
+      id: number;
+      name: string;
+    };
+  };
+  latitude: string;
+  longitude: string;
+  votes_count: number;
   color: string;
+  is_user_voted: boolean;
+  logo: string | null;
 }
 
 type GlobalRankingScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'GlobalRanking'>;
 };
 
-// Mock data - Thay thế bằng API call thực tế
-const mockClubs: Club[] = [
-  { id: 1, name: 'Milan', location: [45.4642, 9.1900], votes: 150, color: '#FF0000' },
-  { id: 2, name: 'Juventus', location: [45.1096, 7.6413], votes: 120, color: '#000000' },
-  { id: 3, name: 'Inter', location: [45.4785, 9.1240], votes: 100, color: '#0000FF' },
-  { id: 4, name: 'Napoli', location: [40.8518, 14.2681], votes: 90, color: '#00BFFF' },
-  { id: 5, name: 'Roma', location: [41.9028, 12.4964], votes: 85, color: '#FFA500' },
-  { id: 6, name: 'Lazio', location: [41.9028, 12.4964], votes: 80, color: '#87CEEB' },
-  { id: 7, name: 'Fiorentina', location: [43.7792, 11.2463], votes: 75, color: '#800080' },
-  { id: 8, name: 'Atalanta', location: [45.7080, 9.6633], votes: 70, color: '#000080' },
-  { id: 9, name: 'Torino', location: [45.0703, 7.6869], votes: 65, color: '#8B0000' },
-  { id: 10, name: 'Sampdoria', location: [44.4056, 8.9463], votes: 60, color: '#4169E1' },
-];
-
 const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation }) => {
-  const { user, logout } = useAuth();
+  const { logout, token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
-  const [filteredClubs, setFilteredClubs] = useState<Club[]>(mockClubs);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [filteredClubs, setFilteredClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const webViewRef = useRef<WebView>(null);
 
-  // Mock user's selected club - Thay thế bằng dữ liệu thực từ API
-  const userClub: Club = mockClubs[0]; // Milan
+  // Fetch clubs data from API
+  const fetchClubs = async () => {
+    try {
+      if (!token) {
+        console.error('No token available');
+        setError('Authentication required');
+        navigation.replace('Login');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      
+      console.log('Token:', token);
+      console.log('Fetching clubs...');
+      
+      // Call the API and handle the response
+      const response = await getClubRankings() as AxiosResponse;
+      console.log('API Response:', response);
+      
+      // The API returns data directly in the response
+      if (response && response.data) {
+        setClubs(response.data as Club[]);
+        setFilteredClubs(response.data as Club[]);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err: any) {
+      console.error('Error fetching clubs:', err);
+      const errorMessage = err?.message || 'Failed to fetch clubs';
+      setError(errorMessage);
+      
+      if (err?.response?.status === 401) {
+        navigation.replace('Login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search clubs from API
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setFilteredClubs(clubs);
+    } else {
+      // Perform search locally instead of calling the API
+      const searchTerm = text.toLowerCase();
+      const filtered = clubs.filter(club => 
+        // Search by club name
+        club.name.toLowerCase().includes(searchTerm) ||
+        // Search by city name
+        club.city.name.toLowerCase().includes(searchTerm) ||
+        // Search by country name
+        club.city.country.name.toLowerCase().includes(searchTerm)
+      );
+      setFilteredClubs(filtered);
+    }
+  };
 
   useEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
-  }, []);
+
+    if (!token) {
+      navigation.replace('Login');
+      return;
+    }
+
+    fetchClubs();
+  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -72,26 +140,26 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
           }
           window.markers = [];
           
-          const clubs = ${JSON.stringify(mockClubs)};
-          const userClub = ${JSON.stringify(userClub)};
+          const clubs = ${JSON.stringify(clubs)};
+          const userVotedClub = ${JSON.stringify(clubs.find(club => club.is_user_voted))};
           const filteredClubs = ${JSON.stringify(filteredClubs)};
           const searchActive = ${searchQuery.length > 0 ? 'true' : 'false'};
           
-          // Add markers for all clubs
+          // Add markers for clubs with valid coordinates
           clubs.forEach(club => {
-            if (club.id !== userClub.id) {
-              // If search is active, only show filtered clubs with reduced opacity for non-matches
+            if (club.latitude && club.longitude) {
               const isInFilter = !searchActive || filteredClubs.some(fc => fc.id === club.id);
               const opacity = searchActive && !isInFilter ? 0.4 : 1;
               
-              const marker = L.marker(club.location, {
-                icon: createClubIcon(club, false),
+              const marker = L.marker([parseFloat(club.latitude), parseFloat(club.longitude)], {
+                icon: createClubIcon(club, club.is_user_voted),
                 opacity: opacity
               })
               .bindPopup(\`
                 <div style="text-align: center; padding: 5px;">
                   <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">\${club.name}</div>
-                  <div style="color: #666; font-size: 14px;">\${club.votes} votes</div>
+                  \${club.is_user_voted ? '<div style="background-color: #e9f7ef; color: #27ae60; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 5px;">Your Vote</div>' : ''}
+                  <div style="color: #666; font-size: 14px;">\${club.votes_count} votes</div>
                 </div>
               \`)
               .addTo(map);
@@ -100,26 +168,19 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
             }
           });
           
-          // Add user's club marker
-          const userMarker = L.marker(userClub.location, {
-            icon: createClubIcon(userClub, true)
-          })
-          .bindPopup(\`
-            <div style="text-align: center; padding: 5px;">
-              <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">\${userClub.name}</div>
-              <div style="background-color: #e9f7ef; color: #27ae60; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 5px;">Your Club</div>
-              <div style="color: #666; font-size: 14px;">\${userClub.votes} votes</div>
-            </div>
-          \`)
-          .addTo(map);
-          window.markers.push(userMarker);
+          // Fit bounds to show all markers if there are any valid coordinates
+          const validCoordinates = clubs
+            .filter(club => club.latitude && club.longitude)
+            .map(club => [parseFloat(club.latitude), parseFloat(club.longitude)]);
+            
+          if (validCoordinates.length > 0) {
+            const bounds = L.latLngBounds(validCoordinates);
+            map.fitBounds(bounds, { padding: [50, 50] });
+          } else {
+            // If no valid coordinates, show default view of Italy
+            map.setView([41.9028, 12.4964], 6);
+          }
           
-          // Fit bounds to show all markers
-          const bounds = L.latLngBounds(clubs.map(club => club.location));
-          map.fitBounds(bounds, { padding: [50, 50] });
-          
-          // Log for debugging
-          console.log('Updated map with clubs:', clubs.map(c => c.name).join(', '));
           true;
         } catch (error) {
           console.error('Error updating markers:', error);
@@ -132,12 +193,13 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
 
   // Update markers when filtered clubs change
   useEffect(() => {
-    const timer = setTimeout(() => {
-      updateMapMarkers();
-    }, 1000); // Delay to ensure WebView is fully loaded
-    
-    return () => clearTimeout(timer);
-  }, [filteredClubs, searchQuery]);
+    if (!loading && clubs.length > 0) {
+      const timer = setTimeout(() => {
+        updateMapMarkers();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [filteredClubs, searchQuery, clubs, loading]);
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -259,7 +321,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
           
           // Initialize map
           function initMap() {
-            map = L.map('map').setView([42.5, 12.5], 5);
+            map = L.map('map').setView([41.9028, 12.4964], 6);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '© OpenStreetMap contributors'
             }).addTo(map);
@@ -287,54 +349,6 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
                 popupAnchor: [0, -50]
               });
             }
-            
-            // Initial markers
-            const clubs = ${JSON.stringify(mockClubs)};
-            const userClub = ${JSON.stringify(userClub)};
-            
-            // Add all clubs to map
-            clubs.forEach(club => {
-              if (club.id !== userClub.id) {
-                const marker = L.marker(club.location, {
-                  icon: createClubIcon(club, false)
-                })
-                .bindPopup(\`
-                  <div style="text-align: center; padding: 5px;">
-                    <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">\${club.name}</div>
-                    <div style="color: #666; font-size: 14px;">\${club.votes} votes</div>
-                  </div>
-                \`)
-                .addTo(map);
-                
-                window.markers.push(marker);
-              }
-            });
-            
-            // Add user's club
-            const userMarker = L.marker(userClub.location, {
-              icon: createClubIcon(userClub, true)
-            })
-            .bindPopup(\`
-              <div style="text-align: center; padding: 5px;">
-                <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">\${userClub.name}</div>
-                <div style="background-color: #e9f7ef; color: #27ae60; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 5px;">Your Club</div>
-                <div style="color: #666; font-size: 14px;">\${userClub.votes} votes</div>
-              </div>
-            \`)
-            .addTo(map);
-            window.markers.push(userMarker);
-            
-            // Open user club popup by default
-            setTimeout(() => {
-              userMarker.openPopup();
-            }, 1000);
-            
-            // Fit bounds to show all markers
-            const bounds = L.latLngBounds(clubs.map(club => club.location));
-            map.fitBounds(bounds, { padding: [50, 50] });
-            
-            // Log for debugging
-            console.log('Map initialized with clubs:', clubs.map(c => c.name).join(', '));
           }
           
           // Initialize map when page loads
@@ -348,18 +362,6 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
       </body>
     </html>
   `;
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setFilteredClubs(mockClubs);
-    } else {
-      const filtered = mockClubs.filter(club => 
-        club.name.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredClubs(filtered);
-    }
-  };
 
   const handleWebViewMessage = (event: any) => {
     try {
@@ -378,22 +380,22 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
     <TouchableOpacity 
       style={[
         styles.clubItem,
-        item.id === userClub.id && styles.userClubItem
+        item.is_user_voted && styles.userClubItem
       ]}
       onPress={() => {
         setSelectedClub(item);
         // Inject JavaScript to focus on selected club
-        if (webViewRef.current) {
+        if (webViewRef.current && item.latitude && item.longitude) {
           const jsCode = `
             try {
               const selectedClub = ${JSON.stringify(item)};
-              map.setView(selectedClub.location, 8);
+              map.setView([parseFloat(selectedClub.latitude), parseFloat(selectedClub.longitude)], 8);
               
               // Find and open popup for this club
               window.markers.forEach(marker => {
                 const markerLatLng = marker.getLatLng();
-                if (markerLatLng.lat === selectedClub.location[0] && 
-                    markerLatLng.lng === selectedClub.location[1]) {
+                if (markerLatLng.lat === parseFloat(selectedClub.latitude) && 
+                    markerLatLng.lng === parseFloat(selectedClub.longitude)) {
                   marker.openPopup();
                 }
               });
@@ -409,9 +411,28 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
     >
       <View style={[styles.clubColor, { backgroundColor: item.color }]} />
       <Text style={styles.clubName}>{item.name}</Text>
-      <Text style={styles.voteCount}>{item.votes} votes</Text>
+      <Text style={styles.voteCount}>{item.votes_count} votes</Text>
     </TouchableOpacity>
   );
+
+  if (loading && clubs.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchClubs}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.mainContainer}>
@@ -425,7 +446,6 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
             javaScriptEnabled={true}
             onLoad={() => {
               console.log('WebView loaded');
-              // Give it a moment to initialize
               setTimeout(updateMapMarkers, 500);
             }}
           />
@@ -446,7 +466,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
           <Text style={styles.rankingTitle}>Club Rankings</Text>
           <View style={styles.rankingContainer}>
             <FlatList
-              data={filteredClubs.sort((a, b) => b.votes - a.votes)}
+              data={filteredClubs.sort((a, b) => b.votes_count - a.votes_count)}
               renderItem={renderClubItem}
               keyExtractor={item => item.id.toString()}
               contentContainerStyle={styles.rankingListContent}
@@ -456,6 +476,8 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
               initialNumToRender={5}
               maxToRenderPerBatch={10}
               windowSize={10}
+              refreshing={loading}
+              onRefresh={fetchClubs}
             />
           </View>
         </View>
@@ -547,6 +569,31 @@ const styles = StyleSheet.create({
   voteCount: {
     fontSize: 14,
     color: '#6c757d',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#dc3545',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#007bff',
+    padding: 15,
+    borderRadius: 10,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

@@ -45,7 +45,9 @@ class RankingController extends Controller
                 ];
             });
 
-        return response()->json($rankings);
+        return response()->json([
+            'data' => $rankings
+        ]);
     }
 
     public function getCountryRankings()
@@ -102,46 +104,7 @@ class RankingController extends Controller
         return response()->json($rankings);
     }
 
-    public function searchClubs(Request $request)
-    {
-        $query = $request->get('q', '');
-        
-        $clubs = Club::with(['city.country'])
-            ->where('is_active', true)
-            ->where(function($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                  ->orWhereHas('city', function($q) use ($query) {
-                      $q->where('name', 'like', "%{$query}%");
-                  })
-                  ->orWhereHas('city.country', function($q) use ($query) {
-                      $q->where('name', 'like', "%{$query}%");
-                  });
-            })
-            ->orderByDesc('votes_count')
-            ->limit(10)
-            ->get()
-            ->map(function ($club) {
-                return [
-                    'id' => $club->id,
-                    'name' => $club->name,
-                    'city' => [
-                        'id' => $club->city->id,
-                        'name' => $club->city->name,
-                        'country' => [
-                            'id' => $club->city->country->id,
-                            'name' => $club->city->country->name
-                        ]
-                    ],
-                    'latitude' => $club->latitude,
-                    'longitude' => $club->longitude,
-                    'votes_count' => $club->votes_count
-                ];
-            });
-
-        return response()->json($clubs);
-    }
-
-    public function getClubRankingsByCountry(Country $country): JsonResponse
+    public function getClubRankingsByCountry(Country $country)
     {
         $clubs = Club::whereHas('city', function($query) use ($country) {
                 $query->where('country_id', $country->id);
@@ -174,7 +137,7 @@ class RankingController extends Controller
         ]);
     }
 
-    public function getClubRankingsByCity(City $city): JsonResponse
+    public function getClubRankingsByCity(City $city)
     {
         $clubs = Club::where('city_id', $city->id)
             ->withCount('votes')
