@@ -17,6 +17,8 @@ import CountriesScreen from './src/screens/CountriesScreen';
 import RankingsScreen from './src/screens/RankingsScreen';
 import EmailVerificationScreen from './src/screens/EmailVerificationScreen';
 import GlobalRankingScreen from './src/screens/GlobalRankingScreen';
+import CountryRankingScreen from './src/screens/CountryRankingScreen';
+import CityRankingScreen from './src/screens/CityRankingScreen';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -29,6 +31,8 @@ export type RootStackParamList = {
   Countries: undefined;
   Rankings: { countryId: number };
   GlobalRanking: undefined;
+  CountryRanking: undefined;
+  CityRanking: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -64,7 +68,17 @@ function App(): React.JSX.Element {
           <Stack.Screen 
             name="GlobalRanking" 
             component={GlobalRankingScreen}
-            options={{ title: 'Global Rankings' }}
+            options={{ title: 'Club Rankings' }}
+          />
+          <Stack.Screen 
+            name="CountryRanking" 
+            component={CountryRankingScreen}
+            options={{ title: 'Country Rankings' }}
+          />
+          <Stack.Screen 
+            name="CityRanking" 
+            component={CityRankingScreen}
+            options={{ title: 'City Rankings' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

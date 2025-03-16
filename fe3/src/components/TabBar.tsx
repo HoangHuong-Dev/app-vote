@@ -28,15 +28,22 @@ const TabBar = ({ navigation, onLogout }: TabBarProps) => {
           style={styles.tabItem}
           onPress={() => navigation.navigate('GlobalRanking')}
         >
-          <Text style={styles.tabText}>Global</Text>
+          <Text style={styles.tabText}>Clubs</Text>
         </TouchableOpacity>
         
-        {/* <TouchableOpacity 
+        <TouchableOpacity 
           style={styles.tabItem}
-          onPress={() => navigation.navigate('Countries')}
+          onPress={() => navigation.navigate('CountryRanking')}
         >
-          <Text style={styles.tabText}>Rankings</Text>
-        </TouchableOpacity> */}
+          <Text style={styles.tabText}>Countries</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.tabItem}
+          onPress={() => navigation.navigate('CityRanking')}
+        >
+          <Text style={styles.tabText}>Cities</Text>
+        </TouchableOpacity>
         
         <TouchableOpacity 
           style={styles.tabItem}

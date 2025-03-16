@@ -72,7 +72,9 @@ class RankingController extends Controller
                 ];
             });
 
-        return response()->json($rankings);
+        return response()->json([
+            'data' => $rankings
+        ]);
     }
 
     public function getCityRankings()
@@ -101,7 +103,9 @@ class RankingController extends Controller
                 ];
             });
 
-        return response()->json($rankings);
+        return response()->json([
+            'data' => $rankings
+        ]);
     }
 
     public function getClubRankingsByCountry(Country $country)

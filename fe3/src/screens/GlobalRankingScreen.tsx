@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import TabBar from '../components/TabBar';
 import { getClubRankings, searchClubs } from '../services/api/rankings';
 import { AxiosResponse } from 'axios';
+import RankingTabs from '../components/RankingTabs';
 
 // Define the Club interface based on the API response from RankingController
 interface Club {
@@ -72,6 +73,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
       console.log('API Response:', response);
       
       // The API returns data directly in the response
+      console.log('Response:', response);
       if (response && response.data) {
         setClubs(response.data as Club[]);
         setFilteredClubs(response.data as Club[]);
@@ -437,6 +439,12 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
   return (
     <View style={styles.mainContainer}>
       <View style={styles.contentContainer}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.headerTitle}>Rankings</Text>
+        </View>
+        
+        <RankingTabs navigation={navigation} activeTab="clubs" />
+
         <View style={styles.mapContainer}>
           <WebView
             ref={webViewRef}
@@ -497,6 +505,18 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  headerContainer: {
+    padding: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    marginTop: 30,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#212529',
   },
   mapContainer: {
     height: height * 0.35, // 35% của chiều cao màn hình
