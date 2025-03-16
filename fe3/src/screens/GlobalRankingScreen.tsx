@@ -51,6 +51,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const webViewRef = useRef<WebView>(null);
+  const flatListRef = useRef<FlatList>(null);
 
   // Fetch clubs data from API
   const fetchClubs = async () => {
@@ -72,13 +73,25 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
       const response = await getClubRankings() as AxiosResponse;
       console.log('API Response:', response);
       
-      // The API returns data directly in the response
-      console.log('Response:', response);
+      // Kiểm tra cấu trúc dữ liệu trả về
       if (response && response.data) {
-        setClubs(response.data as Club[]);
-        setFilteredClubs(response.data as Club[]);
+        // Kiểm tra nếu response.data là một mảng trực tiếp
+        if (Array.isArray(response.data)) {
+          setClubs(response.data as Club[]);
+          setFilteredClubs(response.data as Club[]);
+        } 
+        // Kiểm tra nếu response.data.data là một mảng (cấu trúc lồng nhau)
+        else if (response.data.data && Array.isArray(response.data.data)) {
+          setClubs(response.data.data as Club[]);
+          setFilteredClubs(response.data.data as Club[]);
+        } 
+        else {
+          console.error('Unexpected response structure:', response.data);
+          throw new Error('Invalid response format: Data is not an array');
+        }
       } else {
-        throw new Error('Invalid response format');
+        console.error('No data in response:', response);
+        throw new Error('Invalid response format: No data');
       }
     } catch (err: any) {
       console.error('Error fetching clubs:', err);
@@ -198,6 +211,50 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
     if (!loading && clubs.length > 0) {
       const timer = setTimeout(() => {
         updateMapMarkers();
+        
+        // Tự động chọn club đã được user vote khi vừa vào màn hình
+        const userVotedClub = clubs.find(club => club.is_user_voted);
+        if (userVotedClub) {
+          setSelectedClub(userVotedClub);
+          
+          // Focus vào club đã vote trên bản đồ
+          if (webViewRef.current && userVotedClub.latitude && userVotedClub.longitude) {
+            const jsCode = `
+              try {
+                const selectedClub = ${JSON.stringify(userVotedClub)};
+                map.setView([parseFloat(selectedClub.latitude), parseFloat(selectedClub.longitude)], 8);
+                
+                // Find and open popup for this club
+                setTimeout(() => {
+                  window.markers.forEach(marker => {
+                    const markerLatLng = marker.getLatLng();
+                    if (markerLatLng.lat === parseFloat(selectedClub.latitude) && 
+                        markerLatLng.lng === parseFloat(selectedClub.longitude)) {
+                      marker.openPopup();
+                    }
+                  });
+                }, 500);
+                true;
+              } catch (error) {
+                console.error('Error focusing user voted club:', error);
+                false;
+              }
+            `;
+            webViewRef.current.injectJavaScript(jsCode);
+          }
+          
+          // Scroll đến club đã vote trong danh sách
+          const votedClubIndex = filteredClubs.findIndex(club => club.is_user_voted);
+          if (votedClubIndex !== -1) {
+            setTimeout(() => {
+              flatListRef.current?.scrollToIndex({
+                index: votedClubIndex,
+                animated: true,
+                viewPosition: 0.5
+              });
+            }, 500);
+          }
+        }
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -474,6 +531,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
           <Text style={styles.rankingTitle}>Club Rankings</Text>
           <View style={styles.rankingContainer}>
             <FlatList
+              ref={flatListRef}
               data={filteredClubs.sort((a, b) => b.votes_count - a.votes_count)}
               renderItem={renderClubItem}
               keyExtractor={item => item.id.toString()}
@@ -486,6 +544,14 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
               windowSize={10}
               refreshing={loading}
               onRefresh={fetchClubs}
+              onScrollToIndexFailed={(info) => {
+                const wait = new Promise(resolve => setTimeout(resolve, 500));
+                wait.then(() => {
+                  if (flatListRef.current) {
+                    flatListRef.current.scrollToIndex({ index: info.index, animated: true });
+                  }
+                });
+              }}
             />
           </View>
         </View>
