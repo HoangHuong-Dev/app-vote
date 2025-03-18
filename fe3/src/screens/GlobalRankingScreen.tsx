@@ -49,6 +49,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
   const [clubs, setClubs] = useState<Club[]>([]);
   const [filteredClubs, setFilteredClubs] = useState<Club[]>([]);
   const [userVotedClubs, setUserVotedClubs] = useState<Club[]>([]);
+  const [searchedClub, setSearchedClub] = useState<Club | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const webViewRef = useRef<WebView>(null);
@@ -116,6 +117,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
     setSearchQuery(text);
     if (text.trim() === '') {
       setFilteredClubs(clubs);
+      setSearchedClub(null);
     } else {
       // Perform search locally instead of calling the API
       const searchTerm = text.toLowerCase();
@@ -128,6 +130,13 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
         club.city.country.name.toLowerCase().includes(searchTerm)
       );
       setFilteredClubs(filtered);
+      
+      // Nếu tìm thấy club đầu tiên khớp với search query, lưu vào searchedClub
+      if (filtered.length > 0) {
+        setSearchedClub(filtered[0]);
+      } else {
+        setSearchedClub(null);
+      }
     }
   };
 
@@ -160,25 +169,26 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
           }
           window.markers = [];
           
-          const clubs = ${JSON.stringify(userVotedClubs)}; // Chỉ hiển thị clubs đã vote trên map
+          // Combine userVotedClubs và searchedClub để hiển thị trên map
+          const clubs = ${JSON.stringify([...userVotedClubs, ...(searchedClub ? [searchedClub] : [])])};
           const userVotedClub = ${JSON.stringify(userVotedClubs[0])}; // Club đầu tiên trong danh sách đã vote
-          const filteredClubs = ${JSON.stringify(userVotedClubs)};
           const searchActive = ${searchQuery.length > 0 ? 'true' : 'false'};
           
           // Add markers for clubs with valid coordinates
           clubs.forEach(club => {
             if (club.latitude && club.longitude) {
-              const isInFilter = !searchActive || filteredClubs.some(fc => fc.id === club.id);
-              const opacity = searchActive && !isInFilter ? 0.4 : 1;
+              const isUserVoted = ${JSON.stringify(userVotedClubs.map(c => c.id))}.includes(club.id);
+              const isSearched = ${searchedClub ? searchedClub.id : -1} === club.id;
               
               const marker = L.marker([parseFloat(club.latitude), parseFloat(club.longitude)], {
-                icon: createClubIcon(club, club.is_user_voted),
-                opacity: opacity
+                icon: createClubIcon(club, isUserVoted),
+                opacity: 1
               })
               .bindPopup(\`
                 <div style="text-align: center; padding: 5px;">
                   <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">\${club.name}</div>
-                  \${club.is_user_voted ? '<div style="background-color: #e9f7ef; color: #27ae60; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 5px;">Your Vote</div>' : ''}
+                  \${isUserVoted ? '<div style="background-color: #e9f7ef; color: #27ae60; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 5px;">Your Vote</div>' : ''}
+                  \${isSearched ? '<div style="background-color: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 5px;">Searched Club</div>' : ''}
                   <div style="color: #666; font-size: 14px;">\${club.votes_count} votes</div>
                 </div>
               \`)
@@ -211,59 +221,61 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
     }
   };
 
-  // Update markers when filtered clubs change
+  // Update markers when filtered clubs change or when searchedClub changes
   useEffect(() => {
     if (!loading && clubs.length > 0) {
       const timer = setTimeout(() => {
         updateMapMarkers();
         
-        // Tự động chọn club đã được user vote khi vừa vào màn hình
-        const userVotedClub = clubs.find(club => club.is_user_voted);
-        if (userVotedClub) {
-          setSelectedClub(userVotedClub);
-          
-          // Focus vào club đã vote trên bản đồ
-          if (webViewRef.current && userVotedClub.latitude && userVotedClub.longitude) {
-            const jsCode = `
-              try {
-                const selectedClub = ${JSON.stringify(userVotedClub)};
-                map.setView([parseFloat(selectedClub.latitude), parseFloat(selectedClub.longitude)], 8);
-                
-                // Find and open popup for this club
-                setTimeout(() => {
-                  window.markers.forEach(marker => {
-                    const markerLatLng = marker.getLatLng();
-                    if (markerLatLng.lat === parseFloat(selectedClub.latitude) && 
-                        markerLatLng.lng === parseFloat(selectedClub.longitude)) {
-                      marker.openPopup();
-                    }
-                  });
-                }, 500);
-                true;
-              } catch (error) {
-                console.error('Error focusing user voted club:', error);
-                false;
-              }
-            `;
-            webViewRef.current.injectJavaScript(jsCode);
-          }
-          
-          // Scroll đến club đã vote trong danh sách
-          const votedClubIndex = filteredClubs.findIndex(club => club.is_user_voted);
-          if (votedClubIndex !== -1) {
-            setTimeout(() => {
-              flatListRef.current?.scrollToIndex({
-                index: votedClubIndex,
-                animated: true,
-                viewPosition: 0.5
-              });
-            }, 500);
+        // Tự động chọn club đã được user vote khi vừa vào màn hình và chưa search
+        if (!searchedClub) {
+          const userVotedClub = clubs.find(club => club.is_user_voted);
+          if (userVotedClub) {
+            setSelectedClub(userVotedClub);
+            
+            // Focus vào club đã vote trên bản đồ
+            if (webViewRef.current && userVotedClub.latitude && userVotedClub.longitude) {
+              const jsCode = `
+                try {
+                  const selectedClub = ${JSON.stringify(userVotedClub)};
+                  map.setView([parseFloat(selectedClub.latitude), parseFloat(selectedClub.longitude)], 8);
+                  
+                  // Find and open popup for this club
+                  setTimeout(() => {
+                    window.markers.forEach(marker => {
+                      const markerLatLng = marker.getLatLng();
+                      if (markerLatLng.lat === parseFloat(selectedClub.latitude) && 
+                          markerLatLng.lng === parseFloat(selectedClub.longitude)) {
+                        marker.openPopup();
+                      }
+                    });
+                  }, 500);
+                  true;
+                } catch (error) {
+                  console.error('Error focusing user voted club:', error);
+                  false;
+                }
+              `;
+              webViewRef.current.injectJavaScript(jsCode);
+            }
+            
+            // Scroll đến club đã vote trong danh sách
+            const votedClubIndex = filteredClubs.findIndex(club => club.is_user_voted);
+            if (votedClubIndex !== -1) {
+              setTimeout(() => {
+                flatListRef.current?.scrollToIndex({
+                  index: votedClubIndex,
+                  animated: true,
+                  viewPosition: 0.5
+                });
+              }, 500);
+            }
           }
         }
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [filteredClubs, searchQuery, clubs, loading]);
+  }, [filteredClubs, searchQuery, clubs, loading, searchedClub]);
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -479,6 +491,33 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
     </TouchableOpacity>
   );
 
+  // Render comparison component
+  const renderComparison = () => {
+    if (!searchedClub || userVotedClubs.length === 0) return null;
+    const userVotedClub = userVotedClubs[0]; // Lấy club đầu tiên đã vote
+    return (
+      <View style={styles.comparisonContainer}>
+        <Text style={styles.comparisonTitle}>Fan Comparison</Text>
+        <View style={styles.comparisonContent}>
+          <View style={styles.comparisonClub}>
+            <View style={[styles.clubColor, { backgroundColor: userVotedClub.color }]} />
+            <View style={styles.clubInfo}>
+              <Text style={styles.comparisonClubName} numberOfLines={2}>{userVotedClub.name}</Text>
+              <Text style={styles.comparisonVoteCount}>{userVotedClub.votes_count} fans</Text>
+            </View>
+          </View>
+          <View style={styles.comparisonClub}>
+            <View style={[styles.clubColor, { backgroundColor: searchedClub.color }]} />
+            <View style={styles.clubInfo}>
+              <Text style={styles.comparisonClubName} numberOfLines={2}>{searchedClub.name}</Text>
+              <Text style={styles.comparisonVoteCount}>{searchedClub.votes_count} fans</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   if (loading && clubs.length === 0) {
     return (
       <View style={styles.loadingContainer}>
@@ -530,6 +569,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
             onChangeText={handleSearch}
             placeholderTextColor="#6c757d"
           />
+          {renderComparison()}
         </View>
 
         <View style={styles.rankingOuterContainer}>
@@ -685,6 +725,60 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  comparisonContainer: {
+    marginTop: 15,
+    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  comparisonTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#212529',
+    marginBottom: 15,
+  },
+  comparisonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 5,
+  },
+  comparisonClub: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  clubInfo: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  comparisonClubName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#212529',
+    marginBottom: 4,
+  },
+  comparisonVoteCount: {
+    fontSize: 12,
+    color: '#6c757d',
+  },
+  comparisonArrow: {
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    marginHorizontal: 5,
+  },
+  comparisonDiff: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  comparisonPercentage: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 

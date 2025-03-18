@@ -105,7 +105,7 @@ class RankingController extends Controller
 
         return response()->json([
             'data' => $rankings
-        ]);
+        ])->header('Content-Type', 'application/json');
     }
 
     public function getClubRankingsByCountry(Country $country)
