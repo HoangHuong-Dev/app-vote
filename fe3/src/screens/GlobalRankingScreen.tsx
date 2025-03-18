@@ -98,6 +98,8 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
           console.error('Unexpected response structure:', response.data);
           throw new Error('Invalid response format: Data is not an array');
         }
+      }else{
+        fetchClubs();
       }
     } catch (err: any) {
       console.error('Error fetching clubs:', err);
