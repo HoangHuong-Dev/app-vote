@@ -48,6 +48,7 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [filteredClubs, setFilteredClubs] = useState<Club[]>([]);
+  const [userVotedClubs, setUserVotedClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const webViewRef = useRef<WebView>(null);
@@ -76,13 +77,21 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
       if (response && response.data) {
         // Kiểm tra nếu response.data là một mảng trực tiếp
         if (Array.isArray(response.data)) {
+          // Lưu toàn bộ clubs cho danh sách
           setClubs(response.data as Club[]);
           setFilteredClubs(response.data as Club[]);
+          // Lọc clubs đã vote cho map
+          const votedClubs = response.data.filter((club: Club) => club.is_user_voted);
+          setUserVotedClubs(votedClubs);
         } 
         // Kiểm tra nếu response.data.data là một mảng (cấu trúc lồng nhau)
         else if (response.data.data && Array.isArray(response.data.data)) {
+          // Lưu toàn bộ clubs cho danh sách
           setClubs(response.data.data as Club[]);
           setFilteredClubs(response.data.data as Club[]);
+          // Lọc clubs đã vote cho map
+          const votedClubs = response.data.data.filter((club: Club) => club.is_user_voted);
+          setUserVotedClubs(votedClubs);
         } 
         else {
           console.error('Unexpected response structure:', response.data);
@@ -151,9 +160,9 @@ const GlobalRankingScreen: React.FC<GlobalRankingScreenProps> = ({ navigation })
           }
           window.markers = [];
           
-          const clubs = ${JSON.stringify(clubs)};
-          const userVotedClub = ${JSON.stringify(clubs.find(club => club.is_user_voted))};
-          const filteredClubs = ${JSON.stringify(filteredClubs)};
+          const clubs = ${JSON.stringify(userVotedClubs)}; // Chỉ hiển thị clubs đã vote trên map
+          const userVotedClub = ${JSON.stringify(userVotedClubs[0])}; // Club đầu tiên trong danh sách đã vote
+          const filteredClubs = ${JSON.stringify(userVotedClubs)};
           const searchActive = ${searchQuery.length > 0 ? 'true' : 'false'};
           
           // Add markers for clubs with valid coordinates
